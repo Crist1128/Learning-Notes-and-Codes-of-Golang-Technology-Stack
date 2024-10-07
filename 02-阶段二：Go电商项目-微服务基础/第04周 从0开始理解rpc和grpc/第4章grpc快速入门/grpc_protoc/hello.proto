@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package = "grpc_protoc/hello;hello";  // 有效的包路径
+
+package hello;
+
+service HelloService {
+  rpc SayHello (HelloRequest) returns (HelloResponse);
+}
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloResponse {
+  string message = 1;
+}

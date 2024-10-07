@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package=".;proto";
+
+service SumService {
+  rpc StreamSum(stream SumRequest) returns (SumResponse);
+}
+
+message SumRequest {
+  int32 number = 1;
+}
+
+message SumResponse {
+  int32 sum = 1;
+}

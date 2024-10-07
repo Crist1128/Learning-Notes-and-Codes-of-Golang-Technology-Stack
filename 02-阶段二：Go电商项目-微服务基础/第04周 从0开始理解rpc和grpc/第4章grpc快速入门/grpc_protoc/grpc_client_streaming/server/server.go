@@ -1,0 +1,46 @@
+/**
+ * @File : server.go
+ * @Description : 请填写文件描述
+ * @Author : Junxi You
+ * @Date : 2024-10-07
+ */
+package main
+
+import (
+	"fmt"
+	"google.golang.org/grpc"
+	"grpc_protoc/grpc_client_streaming/proto"
+	"io"
+	"net"
+)
+
+type server struct {
+	proto.UnimplementedSumServiceServer
+}
+
+func (s *server) StreamSum(stream proto.SumService_StreamSumServer) error {
+	var sum int32
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		sum += req.Number
+		fmt.Println("Received number: " + fmt.Sprint(req.Number))
+	}
+	fmt.Println("Returning sum: " + fmt.Sprint(sum))
+	return stream.SendAndClose(&proto.SumResponse{Sum: sum})
+}
+
+func main() {
+	listen, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		panic(err)
+	}
+	s := grpc.NewServer()
+	proto.RegisterSumServiceServer(s, &server{})
+	s.Serve(listen)
+}
