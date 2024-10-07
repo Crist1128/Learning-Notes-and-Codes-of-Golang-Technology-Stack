@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<!-- saved from url=(0050)https://www.cnblogs.com/qcrao-2018/p/11007503.html -->
+<html lang="zh-cn" style="--olcb-folder-code-block-max-height: 80vh; --cnb-code-bg: rgb(245, 245, 245); --cnb-code-font-size: 12px; --cnb-code-color: rgb(68, 68, 68);"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="never">
+    <meta name="keywords" content="Golang">
+    <meta name="description" content="[toc] Go 语言的 context 包短小精悍，非常适合新手学习。不论是它的源码还是实际使用，都值得投入时间去学习。 这篇文章依然想尝试全面、深入地去研究。文章相比往期而言，整体不长，希望你看完可以有所收获！ 什么是 context Go 1.7 标准库引入 context，中文译作“上下文”">
+    <meta property="og:description" content="[toc] Go 语言的 context 包短小精悍，非常适合新手学习。不论是它的源码还是实际使用，都值得投入时间去学习。 这篇文章依然想尝试全面、深入地去研究。文章相比往期而言，整体不长，希望你看完可以有所收获！ 什么是 context Go 1.7 标准库引入 context，中文译作“上下文”">
+    <meta http-equiv="Cache-Control" content="no-transform">
+    <meta http-equiv="Cache-Control" content="no-siteapp">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>深度解密Go语言之context - Stefno - 博客园</title>
+    <link rel="canonical" href="https://www.cnblogs.com/qcrao-2018/p/11007503.html">
+    <link rel="shortcut icon" id="favicon" href="https://assets.cnblogs.com/favicon.svg?v=2" type="image/svg+xml">
+    
+    <style>#home :not(.cnblogs_code):not(.cnblogs_Highlighter)>pre:not([highlighted]):not([class*="brush:"]) code:not(.hljs), :not(.cnblogs_code):not(.cnblogs_Highlighter)>pre:not([highlighted]):not([class*="brush:"]) code:not(.hljs) {background: rgb(245, 245, 245);
+        padding: 12px;
+        border: 0.8px solid rgb(204, 204, 204);
+        border-radius: 3px;
+        border-color: transparent;
+        color: rgb(68, 68, 68);
+        font-family: "Courier New", sans-serif;
+        font-size: 12px</style><link rel="stylesheet" href="./深度解密Go语言之context - Stefno - 博客园_files/blog-common.min.css">
+    
+
+    <link id="MainCss" rel="stylesheet" href="./深度解密Go语言之context - Stefno - 博客园_files/bundle-imetro_hd.min.css">
+        <link id="highlighter-theme-cnblogs" type="text/css" rel="stylesheet" href="./深度解密Go语言之context - Stefno - 博客园_files/cnblogs.css">
+    
+    
+    <link id="mobile-style" media="only screen and (max-width: 767px)" type="text/css" rel="stylesheet" href="./深度解密Go语言之context - Stefno - 博客园_files/bundle-imetro_hd-mobile.min.css">
+    
+    <link type="application/rss+xml" rel="alternate" href="https://www.cnblogs.com/qcrao-2018/rss">
+    <link type="application/rsd+xml" rel="EditURI" href="https://www.cnblogs.com/qcrao-2018/rsd.xml">
+    <link type="application/wlwmanifest+xml" rel="wlwmanifest" href="https://www.cnblogs.com/qcrao-2018/wlwmanifest.xml">
+    <script>
+        var currentBlogId = 434876;
+        var currentBlogApp = 'qcrao-2018';
+        var isLogined = false;
+        var isBlogOwner = false;
+        var skinName = 'iMetro_HD';
+        var visitorUserId = '';
+        var hasCustomScript = false;
+        window.cb_enable_mathjax = false;
+        window.mathEngine = 0;
+        window.codeHighlightEngine = 1;
+        window.enableCodeLineNumber = false;
+        window.codeHighlightTheme = 'cnblogs';
+        window.darkModeCodeHighlightTheme = 'vs2015';
+        window.isDarkCodeHighlightTheme = false;
+        window.isDarkModeCodeHighlightThemeDark = true;
+        window.isDisableCodeHighlighter = false;
+        window.enableCodeThemeTypeFollowSystem = false;
+        window.enableMacStyleCodeBlock = false;
+    </script>
+        <script>
+            window.currentPostId = 11007503;
+            window.currentPostDateAdded = '2019-06-12 08:46';
+        </script>
+    <script src="./深度解密Go语言之context - Stefno - 博客园_files/jquery-3.3.1.min.js.下载"></script>
+    <script src="./深度解密Go语言之context - Stefno - 博客园_files/blog-common.min.js.下载"></script><style>.medium-zoom-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  opacity: 0;
+  transition: opacity 300ms;
+  will-change: opacity;
+}
+
+.medium-zoom--opened .medium-zoom-overlay {
+  cursor: pointer;
+  cursor: zoom-out;
+  opacity: 1;
+}
+
+.medium-zoom-image {
+  cursor: pointer;
+  cursor: zoom-in;
+  /*
+    The `transition` is marked as "!important" for the animation to happen
+    even though it's overriden by another inline `transition` style attribute.
+
+    This is problematic with frameworks that generate inline styles on their
+    images (e.g. Gatsby).
+
+    See https://github.com/francoischalifour/medium-zoom/issues/110
+   */
+  transition: transform 300ms cubic-bezier(0.2, 0, 0.2, 1) !important;
+}
+
+.medium-zoom-image--hidden {
+  visibility: hidden;
+}
+
+.medium-zoom-image--opened {
+  position: relative;
+  cursor: pointer;
+  cursor: zoom-out;
+  will-change: transform;
+}
+</style><script id="hljs-script" src="./深度解密Go语言之context - Stefno - 博客园_files/highlight.min.js.下载" type="text/javascript" async=""></script>
+    
+<meta property="og:image" content="https://user-images.githubusercontent.com/7698088/59235934-643ee480-8c26-11e9-8931-456333900657.png"></head>
+<body class="skin-imetro_hd no-navbar hljs-engine">
+    <a name="top"></a>
+    <div id="top_nav" class="navbar forpc navbar-custom">
+        <nav id="nav_main" class="navbar-main">
+            <ul id="nav_left" class="navbar-list navbar-left">
+                <li class="navbar-branding">
+                    <a href="https://www.cnblogs.com/" title="开发者的网上家园" role="banner">
+                        <img src="./深度解密Go语言之context - Stefno - 博客园_files/logo.svg" alt="博客园Logo">
+                    </a>
+                </li>
+                <li><a href="https://cnblogs.vip/">会员</a></li>
+                <li><a href="https://cnblogs.vip/store">周边</a></li>
+                    <li><a href="https://cnblogs.vip/donate">捐助</a></li>
+                <li>
+                    <a href="https://news.cnblogs.com/" onclick="countClicks(&#39;nav&#39;, &#39;skin-navbar-news&#39;)">新闻</a>
+                </li>
+                <li>
+                    <a href="https://q.cnblogs.com/" onclick="countClicks(&#39;nav&#39;, &#39;skin-navbar-q&#39;)">博问</a>
+                </li>
+                <li>
+                    <a href="https://ing.cnblogs.com/" onclick="countClicks(&#39;nav&#39;, &#39;skin-navbar-ing&#39;)">闪存</a>
+                </li>
+                <li><a href="https://www.cnblogs.com/cmt/p/18341478">赞助商</a></li>
+            </ul>
+            <ul id="nav_right" class="navbar-list navbar-right">
+                <li>
+                    <form id="zzk_search" class="navbar-search dropdown" action="https://zzk.cnblogs.com/s" method="get" role="search">
+                        <input name="w" id="zzk_search_input" placeholder="代码改变世界" type="search" tabindex="3" autocomplete="off">
+                        <button id="zzk_search_button" onclick="window.navbarSearchManager.triggerActiveOption()">
+                            <img id="search_icon" class="focus-hidden" src="./深度解密Go语言之context - Stefno - 博客园_files/search.svg" alt="搜索">
+                            <img class="hidden focus-visible" src="./深度解密Go语言之context - Stefno - 博客园_files/enter.svg" alt="搜索">
+                        </button>
+                        <ul id="navbar_search_options" class="dropdown-menu quick-search-menu">
+                            <li tabindex="0" class="active" onclick="zzkSearch(event, document.getElementById(&#39;zzk_search_input&#39;).value)">
+                                <div class="keyword-wrapper">
+                                    <img src="./深度解密Go语言之context - Stefno - 博客园_files/search.svg" alt="搜索">
+                                    <div class="keyword"></div>
+                                </div>
+                                <span class="search-area">所有博客</span>
+                            </li>
+                                    <li tabindex="1" onclick="zzkBlogSearch(event, &#39;qcrao-2018&#39;, document.getElementById(&#39;zzk_search_input&#39;).value)">
+                                        <div class="keyword-wrapper">
+                                            <img src="./深度解密Go语言之context - Stefno - 博客园_files/search.svg" alt="搜索">
+                                            <div class="keyword"></div>
+                                        </div>
+                                        <span class="search-area">当前博客</span>
+                                    </li>
+                        </ul>
+                    </form>
+                </li>
+                <li id="navbar_login_status" class="navbar-list">
+                    <a class="navbar-user-info navbar-blog" href="https://i.cnblogs.com/EditPosts.aspx?opt=1" alt="写随笔" title="写随笔" style="display: none;">
+                        <img id="new_post_icon" class="navbar-icon" src="./深度解密Go语言之context - Stefno - 博客园_files/newpost.svg" alt="写随笔">
+                    </a>
+                    <a id="navblog-myblog-icon" class="navbar-user-info navbar-blog" href="https://passport.cnblogs.com/GetBlogApplyStatus.aspx" alt="我的博客" title="我的博客" style="display: none;">
+                        <img id="myblog_icon" class="navbar-icon" src="./深度解密Go语言之context - Stefno - 博客园_files/myblog.svg" alt="我的博客">
+                    </a>
+                    <a class="navbar-user-info navbar-message navbar-icon-wrapper" href="https://msg.cnblogs.com/" alt="短消息" title="短消息" style="display: none;">
+                        <img id="msg_icon" class="navbar-icon" src="./深度解密Go语言之context - Stefno - 博客园_files/message.svg" alt="短消息">
+                        <span id="msg_count" style="display: none"></span>
+                    </a>
+                    <a id="navbar_lite_mode_indicator" data-current-page="blog" style="display: none" href="javascript:void(0)" alt="简洁模式" title="简洁模式启用，您在访问他人博客时会使用简洁款皮肤展示">
+                        <img class="navbar-icon" src="./深度解密Go语言之context - Stefno - 博客园_files/lite-mode-on.svg" alt="简洁模式">
+                    </a>
+                    <div id="user_info" class="navbar-user-info dropdown" style="display: none;">
+                        <a class="dropdown-button" href="https://home.cnblogs.com/">
+                            <img id="user_icon" class="navbar-avatar" src="./深度解密Go语言之context - Stefno - 博客园_files/avatar-default.svg" alt="用户头像">
+                        </a>
+                        <div class="dropdown-menu">
+                            <a id="navblog-myblog-text" href="https://passport.cnblogs.com/GetBlogApplyStatus.aspx">我的博客</a>
+                            <a href="https://home.cnblogs.com/">我的园子</a>
+                            <a href="https://account.cnblogs.com/settings/account">账号设置</a>
+                            <a href="javascript:void(0)" id="navbar_lite_mode_toggle" title="简洁模式会使用简洁款皮肤显示所有博客">
+    简洁模式 <img id="navbar_lite_mode_on" src="./深度解密Go语言之context - Stefno - 博客园_files/lite-mode-check.svg" class="hide" style="display: none;"><span id="navbar_lite_mode_spinner" class="hide">...</span>
+</a>
+                            <a href="javascript:void(0)" onclick="account.logout();">退出登录</a>
+                        </div>
+                    </div>
+                    <a class="navbar-anonymous" href="https://account.cnblogs.com/signup" style="display: inline;">注册</a>
+                    <a class="navbar-anonymous" href="javascript:void(0);" onclick="account.login()" style="display: inline;">登录</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <div id="page_begin_html">
+        <a target="_blank" href="https://github.com/qcrao/Go-Questions" class="github-corner" aria-label="View source on Github"><svg width="150" height="150" viewBox="0 0 250 250" style="fill:#FD6C6C;z-index:9999; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+    </div>
+
+    <!--done-->
+<div id="home">
+<div id="header">
+	<div id="blogTitle">
+        <a id="lnkBlogLogo" href="https://www.cnblogs.com/qcrao-2018/"><img id="blogLogo" src="./深度解密Go语言之context - Stefno - 博客园_files/logo.gif" alt="返回主页"></a>		
+		
+<!--done-->
+<h1><a id="Header1_HeaderTitle" class="headermaintitle HeaderMainTitle" href="https://www.cnblogs.com/qcrao-2018">Stefno</a>
+</h1>
+<h2>公众号：码农桃花源</h2>
+
+
+
+
+		
+	</div><!--end: blogTitle 博客的标题和副标题 -->
+	<div id="navigator">
+		
+<ul id="navList">
+<li><a id="blog_nav_sitehome" class="menu" href="https://www.cnblogs.com/">
+博客园</a>
+</li>
+<li>
+<a id="blog_nav_myhome" class="menu" href="https://www.cnblogs.com/qcrao-2018/">
+首页</a>
+</li>
+<li>
+
+<a id="blog_nav_newpost" class="menu" href="https://i.cnblogs.com/EditPosts.aspx?opt=1">
+新随笔</a>
+</li>
+<li>
+<a id="blog_nav_contact" class="menu" href="https://msg.cnblogs.com/send/Stefno">
+联系</a></li>
+<li>
+<a id="blog_nav_rss" class="menu" href="javascript:void(0)" data-rss="https://www.cnblogs.com/qcrao-2018/rss/">
+订阅</a>
+<!--<partial name="./Shared/_XmlLink.cshtml" model="Model" /></li>--></li>
+<li>
+<a id="blog_nav_admin" class="menu" href="https://i.cnblogs.com/">
+管理</a>
+</li>
+</ul>
+
+
+		<div class="blogStats">
+			<span id="stats_post_count">随笔 - 29&nbsp; </span>
+<span id="stats_article_count">文章 - 0&nbsp; </span>
+<span id="stats-comment_count">评论 - 127&nbsp; </span>
+<span id="stats-total-view-count">阅读 - 
+<span title="总阅读数: 317187">
+31万</span></span>
+
+		</div><!--end: blogStats -->
+	</div><!--end: navigator 博客导航栏 -->
+</div><!--end: header 头部 -->
+<div id="main">
+	<div id="mainContent">
+	<div class="forFlow">
+		<div id="post_detail">
+    <!--done-->
+    <div id="topics">
+        <div class="post">
+            <h1 class="postTitle">
+                <a id="cb_post_title_url" class="postTitle2 vertical-middle" href="https://www.cnblogs.com/qcrao-2018/p/11007503.html" title="发布于 2019-06-12 08:46">
+    <span role="heading" aria-level="2">深度解密Go语言之context</span>
+    
+
+</a><button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+
+            </h1>
+            <div class="clear"></div>
+            <div class="postBody">
+                    <div id="cnblogs_post_description" style="display: none">
+        
+        我见过的关于 context 的全网最全面、最有深度的文章！
+    </div>
+<div id="cnblogs_post_body" class="blogpost-body cnblogs-markdown">
+<p></p><div class="toc"><div class="toc-container-header">目录</div><ul><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#%E4%BB%80%E4%B9%88%E6%98%AF-context" rel="noopener nofollow">什么是 context</a></li><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89-context" rel="noopener nofollow">为什么有 context</a></li><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#context-%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86" rel="noopener nofollow">context 底层实现原理</a><ul><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#%E6%95%B4%E4%BD%93%E6%A6%82%E8%A7%88" rel="noopener nofollow">整体概览</a></li><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#%E6%8E%A5%E5%8F%A3" rel="noopener nofollow">接口</a><ul><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#context" rel="noopener nofollow">Context</a></li><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#canceler" rel="noopener nofollow">canceler</a></li></ul></li><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#%E7%BB%93%E6%9E%84%E4%BD%93" rel="noopener nofollow">结构体</a><ul><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#emptyctx" rel="noopener nofollow">emptyCtx</a></li><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#cancelctx" rel="noopener nofollow">cancelCtx</a></li><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#timerctx" rel="noopener nofollow">timerCtx</a></li><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#valuectx" rel="noopener nofollow">valueCtx</a></li></ul></li></ul></li><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8-context" rel="noopener nofollow">如何使用 context</a><ul><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#%E4%BC%A0%E9%80%92%E5%85%B1%E4%BA%AB%E7%9A%84%E6%95%B0%E6%8D%AE" rel="noopener nofollow">传递共享的数据</a></li><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#%E5%8F%96%E6%B6%88-goroutine" rel="noopener nofollow">取消 goroutine</a></li><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#%E9%98%B2%E6%AD%A2-goroutine-%E6%B3%84%E6%BC%8F" rel="noopener nofollow">防止 goroutine 泄漏</a></li></ul></li><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#context-%E7%9C%9F%E7%9A%84%E8%BF%99%E4%B9%88%E5%A5%BD%E5%90%97" rel="noopener nofollow">context 真的这么好吗</a></li><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#%E6%80%BB%E7%BB%93" rel="noopener nofollow">总结</a></li><li><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99" rel="noopener nofollow">参考资料</a></li></ul></div><br>
+Go 语言的 context 包短小精悍，非常适合新手学习。不论是它的源码还是实际使用，都值得投入时间去学习。<p></p>
+<p>这篇文章依然想尝试全面、深入地去研究。文章相比往期而言，整体不长，希望你看完可以有所收获！</p>
+<h1 id="什么是-context">什么是 context<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h1>
+<p>Go 1.7 标准库引入 context，中文译作“上下文”，准确说它是 goroutine 的上下文，包含 goroutine 的运行状态、环境、现场等信息。</p>
+<p>context 主要用来在 goroutine 之间传递上下文信息，包括：取消信号、超时时间、截止时间、k-v 等。</p>
+<p>随着 context 包的引入，标准库中很多接口因此加上了 context 参数，例如 database/sql 包。context 几乎成为了并发控制和超时控制的标准做法。</p>
+<blockquote>
+<p>context.Context 类型的值可以协调多个 groutine 中的代码执行“取消”操作，并且可以存储键值对。最重要的是它是并发安全的。</p>
+</blockquote>
+<blockquote>
+<p>与它协作的 API 都可以由外部控制执行“取消”操作，例如：取消一个 HTTP 请求的执行。</p>
+</blockquote>
+<p>没看懂？没关系，先往后看。</p>
+<h1 id="为什么有-context">为什么有 context<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h1>
+<p>Go 常用来写后台服务，通常只需要几行代码，就可以搭建一个 http server。</p>
+<p>在 Go 的 server 里，通常每来一个请求都会启动若干个 goroutine 同时工作：有些去数据库拿数据，有些调用下游接口获取相关数据……</p>
+<p><img src="./深度解密Go语言之context - Stefno - 博客园_files/59235934-643ee480-8c26-11e9-8931-456333900657.png" alt="request" loading="lazy" class="medium-zoom-image"></p>
+<p>这些 goroutine 需要共享这个请求的基本数据，例如登陆的 token，处理请求的最大超时时间（如果超过此值再返回数据，请求方因为超时接收不到）等等。当请求被取消或是处理时间太长，这有可能是使用者关闭了浏览器或是已经超过了请求方规定的超时时间，请求方直接放弃了这次请求结果。这时，所有正在为这个请求工作的 goroutine 需要快速退出，因为它们的“工作成果”不再被需要了。在相关联的 goroutine 都退出后，系统就可以回收相关的资源。</p>
+<p>再多说一点，Go 语言中的 server 实际上是一个“协程模型”，也就是说一个协程处理一个请求。例如在业务的高峰期，某个下游服务的响应变慢，而当前系统的请求又没有超时控制，或者超时时间设置地过大，那么等待下游服务返回数据的协程就会越来越多。而我们知道，协程是要消耗系统资源的，后果就是协程数激增，内存占用飙涨，甚至导致服务不可用。更严重的会导致雪崩效应，整个服务对外表现为不可用，这肯定是 P0 级别的事故。这时，肯定有人要背锅了。</p>
+<p>其实前面描述的 P0 级别事故，通过设置“允许下游最长处理时间”就可以避免。例如，给下游设置的 timeout 是 50 ms，如果超过这个值还没有接收到返回数据，就直接向客户端返回一个默认值或者错误。例如，返回商品的一个默认库存数量。注意，这里设置的超时时间和创建一个 http client 设置的读写超时时间不一样，这里不详细展开。可以去看看参考资料<code>【Go 在今日头条的实践】</code>一文，有很精彩的论述。</p>
+<p>context 包就是为了解决上面所说的这些问题而开发的：在 一组 goroutine 之间传递共享的值、取消信号、deadline……</p>
+<p><img src="./深度解密Go语言之context - Stefno - 博客园_files/59235969-a405cc00-8c26-11e9-9448-2c6c86e8263b.png" alt="request with context" loading="lazy" class="medium-zoom-image"></p>
+<p>用简练一些的话来说，在Go 里，我们不能直接杀死协程，协程的关闭一般会用 <code>channel+select</code> 方式来控制。但是在某些场景下，例如处理一个请求衍生了很多协程，这些协程之间是相互关联的：需要共享一些全局变量、有共同的 deadline 等，而且可以同时被关闭。再用 <code>channel+select</code> 就会比较麻烦，这时就可以通过 context 来实现。</p>
+<p>一句话：context 用来解决 goroutine 之间<code>退出通知</code>、<code>元数据传递</code>的功能。</p>
+<h1 id="context-底层实现原理">context 底层实现原理<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h1>
+<p>我们分析的 Go 版本依然是 <code>1.9.2</code>。</p>
+<h2 id="整体概览">整体概览<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h2>
+<p>context 包的代码并不长，<code>context.go</code> 文件总共不到 500 行，其中还有很多大段的注释，代码可能也就 200 行左右的样子，是一个非常值得研究的代码库。</p>
+<p>先给大家看一张整体的图：</p>
+<p><img src="./深度解密Go语言之context - Stefno - 博客园_files/59145775-173af280-8a1b-11e9-8867-c99ce02edb09.png" alt="structure" loading="lazy" class="medium-zoom-image"></p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>类型</th>
+<th>名称</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Context</td>
+<td>接口</td>
+<td>定义了 Context 接口的四个方法</td>
+</tr>
+<tr>
+<td>emptyCtx</td>
+<td>结构体</td>
+<td>实现了 Context 接口，它其实是个空的 context</td>
+</tr>
+<tr>
+<td>CancelFunc</td>
+<td>函数</td>
+<td>取消函数</td>
+</tr>
+<tr>
+<td>canceler</td>
+<td>接口</td>
+<td>context 取消接口，定义了两个方法</td>
+</tr>
+<tr>
+<td>cancelCtx</td>
+<td>结构体</td>
+<td>可以被取消</td>
+</tr>
+<tr>
+<td>timerCtx</td>
+<td>结构体</td>
+<td>超时会被取消</td>
+</tr>
+<tr>
+<td>valueCtx</td>
+<td>结构体</td>
+<td>可以存储 k-v 对</td>
+</tr>
+<tr>
+<td>Background</td>
+<td>函数</td>
+<td>返回一个空的 context，常作为根 context</td>
+</tr>
+<tr>
+<td>TODO</td>
+<td>函数</td>
+<td>返回一个空的 context，常用于重构时期，没有合适的 context 可用</td>
+</tr>
+<tr>
+<td>WithCancel</td>
+<td>函数</td>
+<td>基于父 context，生成一个可以取消的 context</td>
+</tr>
+<tr>
+<td>newCancelCtx</td>
+<td>函数</td>
+<td>创建一个可取消的 context</td>
+</tr>
+<tr>
+<td>propagateCancel</td>
+<td>函数</td>
+<td>向下传递 context 节点间的取消关系</td>
+</tr>
+<tr>
+<td>parentCancelCtx</td>
+<td>函数</td>
+<td>找到第一个可取消的父节点</td>
+</tr>
+<tr>
+<td>removeChild</td>
+<td>函数</td>
+<td>去掉父节点的孩子节点</td>
+</tr>
+<tr>
+<td>init</td>
+<td>函数</td>
+<td>包初始化</td>
+</tr>
+<tr>
+<td>WithDeadline</td>
+<td>函数</td>
+<td>创建一个有 deadline 的 context</td>
+</tr>
+<tr>
+<td>WithTimeout</td>
+<td>函数</td>
+<td>创建一个有 timeout 的 context</td>
+</tr>
+<tr>
+<td>WithValue</td>
+<td>函数</td>
+<td>创建一个存储 k-v 对的 context</td>
+</tr>
+</tbody>
+</table></div>
+<p>上面这张表展示了 context 的所有函数、接口、结构体，可以纵览全局，可以在读完文章后，再回头细看。</p>
+<p>整体类图如下：</p>
+<p><img src="./深度解密Go语言之context - Stefno - 博客园_files/59153629-c1a12d00-8a90-11e9-89a4-eaf3e34f190e.png" alt="classes" loading="lazy" class="medium-zoom-image"></p>
+<h2 id="接口">接口<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h2>
+<h3 id="context">Context<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h3>
+<p>现在可以直接看源码：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-keyword">type</span> Context <span class="hljs-keyword">interface</span> {
+	<span class="hljs-comment">// 当 context 被取消或者到了 deadline，返回一个被关闭的 channel</span>
+	Done() &lt;-<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>{}
+
+	<span class="hljs-comment">// 在 channel Done 关闭后，返回 context 取消原因</span>
+	Err() <span class="hljs-type">error</span>
+
+	<span class="hljs-comment">// 返回 context 是否会被取消以及自动取消时间（即 deadline）</span>
+	Deadline() (deadline time.Time, ok <span class="hljs-type">bool</span>)
+
+	<span class="hljs-comment">// 获取 key 对应的 value</span>
+	Value(key <span class="hljs-keyword">interface</span>{}) <span class="hljs-keyword">interface</span>{}
+}
+</code></pre>
+<p><code>Context</code> 是一个接口，定义了 4 个方法，它们都是<code>幂等</code>的。也就是说连续多次调用同一个方法，得到的结果都是相同的。</p>
+<p><code>Done()</code> 返回一个 channel，可以表示 context 被取消的信号：当这个 channel 被关闭时，说明 context 被取消了。注意，这是一个只读的channel。 我们又知道，读一个关闭的 channel 会读出相应类型的零值。并且源码里没有地方会向这个 channel 里面塞入值。换句话说，这是一个 <code>receive-only</code> 的 channel。因此在子协程里读这个 channel，除非被关闭，否则读不出来任何东西。也正是利用了这一点，子协程从 channel 里读出了值（零值）后，就可以做一些收尾工作，尽快退出。</p>
+<p><code>Err()</code> 返回一个错误，表示 channel 被关闭的原因。例如是被取消，还是超时。</p>
+<p><code>Deadline()</code> 返回 context 的截止时间，通过此时间，函数就可以决定是否进行接下来的操作，如果时间太短，就可以不往下做了，否则浪费系统资源。当然，也可以用这个 deadline 来设置一个 I/O 操作的超时时间。</p>
+<p><code>Value()</code> 获取之前设置的 key 对应的 value。</p>
+<h3 id="canceler">canceler<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h3>
+<p>再来看另外一个接口：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-keyword">type</span> canceler <span class="hljs-keyword">interface</span> {
+	cancel(removeFromParent <span class="hljs-type">bool</span>, err <span class="hljs-type">error</span>)
+	Done() &lt;-<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>{}
+}
+</code></pre>
+<p>实现了上面定义的两个方法的 Context，就表明该 Context 是可取消的。源码中有两个类型实现了 canceler 接口：<code>*cancelCtx</code> 和 <code>*timerCtx</code>。注意是加了 <code>*</code> 号的，是这两个结构体的指针实现了 canceler 接口。</p>
+<p>Context 接口设计成这个样子的原因：</p>
+<ul>
+<li>“取消”操作应该是建议性，而非强制性</li>
+</ul>
+<p>caller 不应该去关心、干涉 callee 的情况，决定如何以及何时 return 是 callee 的责任。caller 只需发送“取消”信息，callee 根据收到的信息来做进一步的决策，因此接口并没有定义 cancel 方法。</p>
+<ul>
+<li>“取消”操作应该可传递</li>
+</ul>
+<p>“取消”某个函数时，和它相关联的其他函数也应该“取消”。因此，<code>Done()</code> 方法返回一个只读的 channel，所有相关函数监听此 channel。一旦 channel 关闭，通过 channel 的“广播机制”，所有监听者都能收到。</p>
+<h2 id="结构体">结构体<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h2>
+<h3 id="emptyctx">emptyCtx<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h3>
+<p>源码中定义了 <code>Context</code> 接口后，并且给出了一个实现：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-keyword">type</span> emptyCtx <span class="hljs-type">int</span>
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(*emptyCtx)</span></span> Deadline() (deadline time.Time, ok <span class="hljs-type">bool</span>) {
+	<span class="hljs-keyword">return</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(*emptyCtx)</span></span> Done() &lt;-<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>{} {
+	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(*emptyCtx)</span></span> Err() <span class="hljs-type">error</span> {
+	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(*emptyCtx)</span></span> Value(key <span class="hljs-keyword">interface</span>{}) <span class="hljs-keyword">interface</span>{} {
+	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+}
+</code></pre>
+<p>看这段源码，非常 happy。因为每个函数都实现的异常简单，要么是直接返回，要么是返回 nil。</p>
+<p>所以，这实际上是一个空的 context，永远不会被 cancel，没有存储值，也没有 deadline。</p>
+<p>它被包装成：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-keyword">var</span> (
+	background = <span class="hljs-built_in">new</span>(emptyCtx)
+	todo       = <span class="hljs-built_in">new</span>(emptyCtx)
+)
+</code></pre>
+<p>通过下面两个导出的函数（首字母大写）对外公开：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Background</span><span class="hljs-params">()</span></span> Context {
+	<span class="hljs-keyword">return</span> background
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TODO</span><span class="hljs-params">()</span></span> Context {
+	<span class="hljs-keyword">return</span> todo
+}
+</code></pre>
+<p>background 通常用在 main 函数中，作为所有 context 的根节点。</p>
+<p>todo 通常用在并不知道传递什么 context的情形。例如，调用一个需要传递 context 参数的函数，你手头并没有其他 context 可以传递，这时就可以传递 todo。这常常发生在重构进行中，给一些函数添加了一个 Context 参数，但不知道要传什么，就用 todo “占个位子”，最终要换成其他 context。</p>
+<h3 id="cancelctx">cancelCtx<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h3>
+<p>再来看一个重要的 context：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-keyword">type</span> cancelCtx <span class="hljs-keyword">struct</span> {
+	Context
+
+	<span class="hljs-comment">// 保护之后的字段</span>
+	mu       sync.Mutex
+	done     <span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>{}
+	children <span class="hljs-keyword">map</span>[canceler]<span class="hljs-keyword">struct</span>{}
+	err      <span class="hljs-type">error</span>
+}
+</code></pre>
+<p>这是一个可以取消的 Context，实现了 canceler 接口。它直接将接口 Context 作为它的一个匿名字段，这样，它就可以被看成一个 Context。</p>
+<p>先来看 <code>Done()</code> 方法的实现：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *cancelCtx)</span></span> Done() &lt;-<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>{} {
+	c.mu.Lock()
+	<span class="hljs-keyword">if</span> c.done == <span class="hljs-literal">nil</span> {
+		c.done = <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>{})
+	}
+	d := c.done
+	c.mu.Unlock()
+	<span class="hljs-keyword">return</span> d
+}
+</code></pre>
+<p>c.done 是“懒汉式”创建，只有调用了 Done() 方法的时候才会被创建。再次说明，函数返回的是一个只读的 channel，而且没有地方向这个 channel 里面写数据。所以，直接调用读这个 channel，协程会被 block 住。一般通过搭配 select 来使用。一旦关闭，就会立即读出零值。</p>
+<p><code>Err()</code> 和 <code>String()</code> 方法比较简单，不多说。推荐看源码，非常简单。</p>
+<p>接下来，我们重点关注 <code>cancel()</code> 方法的实现：</p>
+<pre class="highlighter-hljs" highlighted="true" has-selection="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *cancelCtx)</span></span> cancel(removeFromParent <span class="hljs-type">bool</span>, err <span class="hljs-type">error</span>) {
+    <span class="hljs-comment">// 必须要传 err</span>
+	<span class="hljs-keyword">if</span> err == <span class="hljs-literal">nil</span> {
+		<span class="hljs-built_in">panic</span>(<span class="hljs-string">"context: internal error: missing cancel error"</span>)
+	}
+	c.mu.Lock()
+	<span class="hljs-keyword">if</span> c.err != <span class="hljs-literal">nil</span> {
+		c.mu.Unlock()
+		<span class="hljs-keyword">return</span> <span class="hljs-comment">// 已经被其他协程取消</span>
+	}
+	<span class="hljs-comment">// 给 err 字段赋值</span>
+	c.err = err
+	<span class="hljs-comment">// 关闭 channel，通知其他协程</span>
+	<span class="hljs-keyword">if</span> c.done == <span class="hljs-literal">nil</span> {
+		c.done = closedchan
+	} <span class="hljs-keyword">else</span> {
+		<span class="hljs-built_in">close</span>(c.done)
+	}
+	
+	<span class="hljs-comment">// 遍历它的所有子节点</span>
+	<span class="hljs-keyword">for</span> child := <span class="hljs-keyword">range</span> c.children {
+	    <span class="hljs-comment">// 递归地取消所有子节点</span>
+		child.cancel(<span class="hljs-literal">false</span>, err)
+	}
+	<span class="hljs-comment">// 将子节点置空</span>
+	c.children = <span class="hljs-literal">nil</span>
+	c.mu.Unlock()
+
+	<span class="hljs-keyword">if</span> removeFromParent {
+	    <span class="hljs-comment">// 从父节点中移除自己 </span>
+		removeChild(c.Context, c)
+	}
+}
+</code></pre>
+<p>总体来看，<code>cancel()</code> 方法的功能就是关闭 channel：c.done；递归地取消它的所有子节点；从父节点从删除自己。达到的效果是通过关闭 channel，将取消信号传递给了它的所有子节点。goroutine 接收到取消信号的方式就是 select 语句中的<code>读 c.done</code> 被选中。</p>
+<p>我们再来看创建一个可取消的 Context 的方法：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">WithCancel</span><span class="hljs-params">(parent Context)</span></span> (ctx Context, cancel CancelFunc) {
+	c := newCancelCtx(parent)
+	propagateCancel(parent, &amp;c)
+	<span class="hljs-keyword">return</span> &amp;c, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> { c.cancel(<span class="hljs-literal">true</span>, Canceled) }
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">newCancelCtx</span><span class="hljs-params">(parent Context)</span></span> cancelCtx {
+	<span class="hljs-keyword">return</span> cancelCtx{Context: parent}
+}
+</code></pre>
+<p>这是一个暴露给用户的方法，传入一个父 Context（这通常是一个 <code>background</code>，作为根节点），返回新建的 context，新 context 的 done channel 是新建的（前文讲过）。</p>
+<p>当 WithCancel 函数返回的 CancelFunc 被调用或者是父节点的 done channel 被关闭（父节点的 CancelFunc 被调用），此 context（子节点） 的 done channel 也会被关闭。</p>
+<p>注意传给 WithCancel 方法的参数，前者是 true，也就是说取消的时候，需要将自己从父节点里删除。第二个参数则是一个固定的取消错误类型：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-keyword">var</span> Canceled = errors.New(<span class="hljs-string">"context canceled"</span>)
+</code></pre>
+<p>还注意到一点，调用子节点 cancel 方法的时候，传入的第一个参数 <code>removeFromParent</code> 是 false。</p>
+<p>两个问题需要回答：1. 什么时候会传 true？2. 为什么有时传 true，有时传 false？</p>
+<p>当 <code>removeFromParent</code> 为 true 时，会将当前节点的 context 从父节点 context 中删除：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">removeChild</span><span class="hljs-params">(parent Context, child canceler)</span></span> {
+	p, ok := parentCancelCtx(parent)
+	<span class="hljs-keyword">if</span> !ok {
+		<span class="hljs-keyword">return</span>
+	}
+	p.mu.Lock()
+	<span class="hljs-keyword">if</span> p.children != <span class="hljs-literal">nil</span> {
+		<span class="hljs-built_in">delete</span>(p.children, child)
+	}
+	p.mu.Unlock()
+}
+</code></pre>
+<p>最关键的一行：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-built_in">delete</span>(p.children, child)
+</code></pre>
+<p>什么时候会传 true 呢？答案是调用 <code>WithCancel()</code> 方法的时候，也就是新创建一个可取消的 context 节点时，返回的 cancelFunc 函数会传入 true。这样做的结果是：当调用返回的 cancelFunc 时，会将这个 context 从它的父节点里“除名”，因为父节点可能有很多子节点，你自己取消了，所以我要和你断绝关系，对其他人没影响。</p>
+<p>在取消函数内部，我知道，我所有的子节点都会因为我的一：<code>c.children = nil</code> 而化为灰烬。我自然就没有必要再多做这一步，最后我所有的子节点都会和我断绝关系，没必要一个个做。另外，如果遍历子节点的时候，调用 child.cancel 函数传了 true，还会造成同时遍历和删除一个 map 的境地，会有问题的。</p>
+<p><img src="./深度解密Go语言之context - Stefno - 博客园_files/59315867-37ee9b00-8cee-11e9-8c19-9a4cf7606d14.png" alt="context cancel" loading="lazy" class="medium-zoom-image"></p>
+<p>如上左图，代表一棵 context 树。当调用左图中标红 context 的 cancel 方法后，该 context 从它的父 context 中去除掉了：实线箭头变成了虚线。且虚线圈框出来的 context 都被取消了，圈内的 context 间的父子关系都荡然无存了。</p>
+<p>重点看 <code>propagateCancel()</code>：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">propagateCancel</span><span class="hljs-params">(parent Context, child canceler)</span></span> {
+	<span class="hljs-comment">// 父节点是个空节点</span>
+	<span class="hljs-keyword">if</span> parent.Done() == <span class="hljs-literal">nil</span> {
+		<span class="hljs-keyword">return</span> <span class="hljs-comment">// parent is never canceled</span>
+	}
+	<span class="hljs-comment">// 找到可以取消的父 context</span>
+	<span class="hljs-keyword">if</span> p, ok := parentCancelCtx(parent); ok {
+		p.mu.Lock()
+		<span class="hljs-keyword">if</span> p.err != <span class="hljs-literal">nil</span> {
+			<span class="hljs-comment">// 父节点已经被取消了，本节点（子节点）也要取消</span>
+			child.cancel(<span class="hljs-literal">false</span>, p.err)
+		} <span class="hljs-keyword">else</span> {
+			<span class="hljs-comment">// 父节点未取消</span>
+			<span class="hljs-keyword">if</span> p.children == <span class="hljs-literal">nil</span> {
+				p.children = <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[canceler]<span class="hljs-keyword">struct</span>{})
+			}
+			<span class="hljs-comment">// "挂到"父节点上</span>
+			p.children[child] = <span class="hljs-keyword">struct</span>{}{}
+		}
+		p.mu.Unlock()
+	} <span class="hljs-keyword">else</span> {
+		<span class="hljs-comment">// 如果没有找到可取消的父 context。新启动一个协程监控父节点或子节点取消信号</span>
+		<span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> {
+			<span class="hljs-keyword">select</span> {
+			<span class="hljs-keyword">case</span> &lt;-parent.Done():
+				child.cancel(<span class="hljs-literal">false</span>, parent.Err())
+			<span class="hljs-keyword">case</span> &lt;-child.Done():
+			}
+		}()
+	}
+}
+</code></pre>
+<p>这个方法的作用就是向上寻找可以“挂靠”的“可取消”的 context，并且“挂靠”上去。这样，调用上层 cancel 方法的时候，就可以层层传递，将那些挂靠的子 context 同时“取消”。</p>
+<p>这里着重解释下为什么会有 else 描述的情况发生。<code>else</code> 是指当前节点 context 没有向上找到可以取消的父节点，那么就要再启动一个协程监控父节点或者子节点的取消动作。</p>
+<p>这里就有疑问了，既然没找到可以取消的父节点，那 <code>case &lt;-parent.Done()</code> 这个 case 就永远不会发生，所以可以忽略这个 case；而 <code>case &lt;-child.Done()</code> 这个 case 又啥事不干。那这个 <code>else</code> 不就多余了吗？</p>
+<p>其实不然。我们来看 <code>parentCancelCtx</code> 的代码：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">parentCancelCtx</span><span class="hljs-params">(parent Context)</span></span> (*cancelCtx, <span class="hljs-type">bool</span>) {
+	<span class="hljs-keyword">for</span> {
+		<span class="hljs-keyword">switch</span> c := parent.(<span class="hljs-keyword">type</span>) {
+		<span class="hljs-keyword">case</span> *cancelCtx:
+			<span class="hljs-keyword">return</span> c, <span class="hljs-literal">true</span>
+		<span class="hljs-keyword">case</span> *timerCtx:
+			<span class="hljs-keyword">return</span> &amp;c.cancelCtx, <span class="hljs-literal">true</span>
+		<span class="hljs-keyword">case</span> *valueCtx:
+			parent = c.Context
+		<span class="hljs-keyword">default</span>:
+			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">false</span>
+		}
+	}
+}
+</code></pre>
+<p>这里只会识别三种 Context 类型：<em>cancelCtx，</em>timerCtx，*valueCtx。若是把 Context 内嵌到一个类型里，就识别不出来了。</p>
+<p>由于 context 包的代码并不多，所以我直接把它 copy 出来了，然后在 else 语句里加上了几条打印语句，来验证上面的说法：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-keyword">type</span> MyContext <span class="hljs-keyword">struct</span> {
+    <span class="hljs-comment">// 这里的 Context 是我 copy 出来的，所以前面不用加 context.</span>
+	Context
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> {
+	childCancel := <span class="hljs-literal">true</span>
+
+	parentCtx, parentFunc := WithCancel(Background())
+	mctx := MyContext{parentCtx}
+
+	childCtx, childFun := WithCancel(mctx)
+
+	<span class="hljs-keyword">if</span> childCancel {
+		childFun()
+	} <span class="hljs-keyword">else</span> {
+		parentFunc()
+	}
+
+	fmt.Println(parentCtx)
+	fmt.Println(mctx)
+	fmt.Println(childCtx)
+
+    <span class="hljs-comment">// 防止主协程退出太快，子协程来不及打印 </span>
+	time.Sleep(<span class="hljs-number">10</span> * time.Second)
+}
+</code></pre>
+<p>我自已在 else 里添加的打印语句我就不贴出来了，感兴趣的可以自己动手实验下。我们看下三个 context 的打印结果：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-shell highlighter-hljs hljs">context.Background.WithCancel
+{context.Background.WithCancel}
+{context.Background.WithCancel}.WithCancel
+</code></pre>
+<p>果然，mctx，childCtx 和正常的 parentCtx 不一样，因为它是一个自定义的结构体类型。</p>
+<p><code>else</code> 这段代码说明，如果把 ctx 强行塞进一个结构体，并用它作为父节点，调用 WithCancel 函数构建子节点 context 的时候，Go 会新启动一个协程来监控取消信号，明显有点浪费嘛。</p>
+<p>再来说一下，select 语句里的两个 case 其实都不能删。</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-keyword">select</span> {
+	<span class="hljs-keyword">case</span> &lt;-parent.Done():
+		child.cancel(<span class="hljs-literal">false</span>, parent.Err())
+	<span class="hljs-keyword">case</span> &lt;-child.Done():
+}
+</code></pre>
+<p>第一个 case 说明当父节点取消，则取消子节点。如果去掉这个 case，那么父节点取消的信号就不能传递到子节点。</p>
+<p>第二个 case 是说如果子节点自己取消了，那就退出这个 select，父节点的取消信号就不用管了。如果去掉这个 case，那么很可能父节点一直不取消，这个 goroutine 就泄漏了。当然，如果父节点取消了，就会重复让子节点取消，不过，这也没什么影响嘛。</p>
+<h3 id="timerctx">timerCtx<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h3>
+<p>timerCtx 基于 cancelCtx，只是多了一个 time.Timer 和一个 deadline。Timer 会在 deadline 到来时，自动取消 context。</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-keyword">type</span> timerCtx <span class="hljs-keyword">struct</span> {
+	cancelCtx
+	timer *time.Timer <span class="hljs-comment">// Under cancelCtx.mu.</span>
+
+	deadline time.Time
+}
+</code></pre>
+<p>timerCtx 首先是一个 cancelCtx，所以它能取消。看下 cancel() 方法：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *timerCtx)</span></span> cancel(removeFromParent <span class="hljs-type">bool</span>, err <span class="hljs-type">error</span>) {
+	<span class="hljs-comment">// 直接调用 cancelCtx 的取消方法</span>
+	c.cancelCtx.cancel(<span class="hljs-literal">false</span>, err)
+	<span class="hljs-keyword">if</span> removeFromParent {
+		<span class="hljs-comment">// 从父节点中删除子节点</span>
+		removeChild(c.cancelCtx.Context, c)
+	}
+	c.mu.Lock()
+	<span class="hljs-keyword">if</span> c.timer != <span class="hljs-literal">nil</span> {
+		<span class="hljs-comment">// 关掉定时器，这样，在deadline 到来时，不会再次取消</span>
+		c.timer.Stop()
+		c.timer = <span class="hljs-literal">nil</span>
+	}
+	c.mu.Unlock()
+}
+</code></pre>
+<p>创建 timerCtx 的方法：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">WithTimeout</span><span class="hljs-params">(parent Context, timeout time.Duration)</span></span> (Context, CancelFunc) {
+	<span class="hljs-keyword">return</span> WithDeadline(parent, time.Now().Add(timeout))
+}
+</code></pre>
+<p><code>WithTimeout</code> 函数直接调用了 <code>WithDeadline</code>，传入的 deadline 是当前时间加上 timeout 的时间，也就是从现在开始再经过 timeout 时间就算超时。也就是说，<code>WithDeadline</code> 需要用的是绝对时间。重点来看它：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">WithDeadline</span><span class="hljs-params">(parent Context, deadline time.Time)</span></span> (Context, CancelFunc) {
+	<span class="hljs-keyword">if</span> cur, ok := parent.Deadline(); ok &amp;&amp; cur.Before(deadline) {
+		<span class="hljs-comment">// 如果父节点 context 的 deadline 早于指定时间。直接构建一个可取消的 context。</span>
+		<span class="hljs-comment">// 原因是一旦父节点超时，自动调用 cancel 函数，子节点也会随之取消。</span>
+		<span class="hljs-comment">// 所以不用单独处理子节点的计时器时间到了之后，自动调用 cancel 函数</span>
+		<span class="hljs-keyword">return</span> WithCancel(parent)
+	}
+	
+	<span class="hljs-comment">// 构建 timerCtx</span>
+	c := &amp;timerCtx{
+		cancelCtx: newCancelCtx(parent),
+		deadline:  deadline,
+	}
+	<span class="hljs-comment">// 挂靠到父节点上</span>
+	propagateCancel(parent, c)
+	
+	<span class="hljs-comment">// 计算当前距离 deadline 的时间</span>
+	d := time.Until(deadline)
+	<span class="hljs-keyword">if</span> d &lt;= <span class="hljs-number">0</span> {
+		<span class="hljs-comment">// 直接取消</span>
+		c.cancel(<span class="hljs-literal">true</span>, DeadlineExceeded) <span class="hljs-comment">// deadline has already passed</span>
+		<span class="hljs-keyword">return</span> c, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> { c.cancel(<span class="hljs-literal">true</span>, Canceled) }
+	}
+	c.mu.Lock()
+	<span class="hljs-keyword">defer</span> c.mu.Unlock()
+	<span class="hljs-keyword">if</span> c.err == <span class="hljs-literal">nil</span> {
+		<span class="hljs-comment">// d 时间后，timer 会自动调用 cancel 函数。自动取消</span>
+		c.timer = time.AfterFunc(d, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> {
+			c.cancel(<span class="hljs-literal">true</span>, DeadlineExceeded)
+		})
+	}
+	<span class="hljs-keyword">return</span> c, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> { c.cancel(<span class="hljs-literal">true</span>, Canceled) }
+}
+</code></pre>
+<p>也就是说仍然要把子节点挂靠到父节点，一旦父节点取消了，会把取消信号向下传递到子节点，子节点随之取消。</p>
+<p>有一个特殊情况是，如果要创建的这个子节点的 deadline 比父节点要晚，也就是说如果父节点是时间到自动取消，那么一定会取消这个子节点，导致子节点的 deadline 根本不起作用，因为子节点在 deadline 到来之前就已经被父节点取消了。</p>
+<p>这个函数的最核心的一句是：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go">c.timer = time.AfterFunc(d, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> {
+	c.cancel(<span class="hljs-literal">true</span>, DeadlineExceeded)
+})
+</code></pre>
+<p>c.timer 会在 d 时间间隔后，自动调用 cancel 函数，并且传入的错误就是 <code>DeadlineExceeded</code>：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-keyword">var</span> DeadlineExceeded <span class="hljs-type">error</span> = deadlineExceededError{}
+
+<span class="hljs-keyword">type</span> deadlineExceededError <span class="hljs-keyword">struct</span>{}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(deadlineExceededError)</span></span> Error() <span class="hljs-type">string</span>   { <span class="hljs-keyword">return</span> <span class="hljs-string">"context deadline exceeded"</span> }
+</code></pre>
+<p>也就是超时错误。</p>
+<h3 id="valuectx">valueCtx<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h3>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-keyword">type</span> valueCtx <span class="hljs-keyword">struct</span> {
+	Context
+	key, val <span class="hljs-keyword">interface</span>{}
+}
+</code></pre>
+<p>它实现了两个方法：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *valueCtx)</span></span> String() <span class="hljs-type">string</span> {
+	<span class="hljs-keyword">return</span> fmt.Sprintf(<span class="hljs-string">"%v.WithValue(%#v, %#v)"</span>, c.Context, c.key, c.val)
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *valueCtx)</span></span> Value(key <span class="hljs-keyword">interface</span>{}) <span class="hljs-keyword">interface</span>{} {
+	<span class="hljs-keyword">if</span> c.key == key {
+		<span class="hljs-keyword">return</span> c.val
+	}
+	<span class="hljs-keyword">return</span> c.Context.Value(key)
+}
+</code></pre>
+<p>由于它直接将 Context 作为匿名字段，因此仅管它只实现了 2 个方法，其他方法继承自父 context。但它仍然是一个 Context，这是 Go 语言的一个特点。</p>
+<p>创建 valueCtx 的函数：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">WithValue</span><span class="hljs-params">(parent Context, key, val <span class="hljs-keyword">interface</span>{})</span></span> Context {
+	<span class="hljs-keyword">if</span> key == <span class="hljs-literal">nil</span> {
+		<span class="hljs-built_in">panic</span>(<span class="hljs-string">"nil key"</span>)
+	}
+	<span class="hljs-keyword">if</span> !reflect.TypeOf(key).Comparable() {
+		<span class="hljs-built_in">panic</span>(<span class="hljs-string">"key is not comparable"</span>)
+	}
+	<span class="hljs-keyword">return</span> &amp;valueCtx{parent, key, val}
+}
+</code></pre>
+<p>对 key 的要求是可比较，因为之后需要通过 key 取出 context 中的值，可比较是必须的。</p>
+<p>通过层层传递 context，最终形成这样一棵树：</p>
+<p><img src="./深度解密Go语言之context - Stefno - 博客园_files/59154893-5e72c300-8aaf-11e9-9b78-3c34b5e73a45.png" alt="valueCtx" loading="lazy"></p>
+<p>和链表有点像，只是它的方向相反：Context 指向它的父节点，链表则指向下一个节点。通过 WithValue 函数，可以创建层层的 valueCtx，存储 goroutine 间可以共享的变量。</p>
+<p>取值的过程，实际上是一个递归查找的过程：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *valueCtx)</span></span> Value(key <span class="hljs-keyword">interface</span>{}) <span class="hljs-keyword">interface</span>{} {
+	<span class="hljs-keyword">if</span> c.key == key {
+		<span class="hljs-keyword">return</span> c.val
+	}
+	<span class="hljs-keyword">return</span> c.Context.Value(key)
+}
+</code></pre>
+<p>它会顺着链路一直往上找，比较当前节点的 key<br>
+是否是要找的 key，如果是，则直接返回 value。否则，一直顺着 context 往前，最终找到根节点（一般是 emptyCtx），直接返回一个 nil。所以用 Value 方法的时候要判断结果是否为 nil。</p>
+<p>因为查找方向是往上走的，所以，父节点没法获取子节点存储的值，子节点却可以获取父节点的值。</p>
+<p><code>WithValue</code> 创建 context 节点的过程实际上就是创建链表节点的过程。两个节点的 key 值是可以相等的，但它们是两个不同的 context 节点。查找的时候，会向上查找到最后一个挂载的 context 节点，也就是离得比较近的一个父节点 context。所以，整体上而言，用 <code>WithValue</code> 构造的其实是一个低效率的链表。</p>
+<p>如果你接手过项目，肯定经历过这样的窘境：在一个处理过程中，有若干子函数、子协程。各种不同的地方会向 context 里塞入各种不同的 k-v 对，最后在某个地方使用。</p>
+<p>你根本就不知道什么时候什么地方传了什么值？这些值会不会被“覆盖”（底层是两个不同的 context 节点，查找的时候，只会返回一个结果）？你肯定会崩溃的。</p>
+<p>而这也是 <code>context.Value</code> 最受争议的地方。很多人建议尽量不要通过 context 传值。</p>
+<h1 id="如何使用-context">如何使用 context<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h1>
+<p>context 使用起来非常方便。源码里对外提供了一个创建根节点 context 的函数：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Background</span><span class="hljs-params">()</span></span> Context
+</code></pre>
+<p>background 是一个空的 context， 它不能被取消，没有值，也没有超时时间。</p>
+<p>有了根节点 context，又提供了四个函数创建子节点 context：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">WithCancel</span><span class="hljs-params">(parent Context)</span></span> (ctx Context, cancel CancelFunc)
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">WithDeadline</span><span class="hljs-params">(parent Context, deadline time.Time)</span></span> (Context, CancelFunc)
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">WithTimeout</span><span class="hljs-params">(parent Context, timeout time.Duration)</span></span> (Context, CancelFunc)
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">WithValue</span><span class="hljs-params">(parent Context, key, val <span class="hljs-keyword">interface</span>{})</span></span> Context
+</code></pre>
+<p>context 会在函数传递间传递。只需要在适当的时间调用 cancel 函数向 goroutines 发出取消信号或者调用 Value 函数取出 context 中的值。</p>
+<p>在官方博客里，对于使用 context 提出了几点建议：</p>
+<ol>
+<li>Do not store Contexts inside a struct type; instead, pass a Context explicitly to each function that needs it. The Context should be the first parameter, typically named ctx.</li>
+<li>Do not pass a nil Context, even if a function permits it. Pass context.TODO if you are unsure about which Context to use.</li>
+<li>Use context Values only for request-scoped data that transits processes and APIs, not for passing optional parameters to functions.</li>
+<li>The same Context may be passed to functions running in different goroutines; Contexts are safe for simultaneous use by multiple goroutines.</li>
+</ol>
+<p>我翻译一下：</p>
+<ol>
+<li>不要将 Context 塞到结构体里。直接将 Context 类型作为函数的第一参数，而且一般都命名为 ctx。</li>
+<li>不要向函数传入一个 nil 的 context，如果你实在不知道传什么，标准库给你准备好了一个 context：todo。</li>
+<li>不要把本应该作为函数参数的类型塞到 context 中，context 存储的应该是一些共同的数据。例如：登陆的 session、cookie 等。</li>
+<li>同一个 context 可能会被传递到多个 goroutine，别担心，context 是并发安全的。</li>
+</ol>
+<h2 id="传递共享的数据">传递共享的数据<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h2>
+<p>对于 Web 服务端开发，往往希望将一个请求处理的整个过程串起来，这就非常依赖于 Thread Local（对于 Go 可理解为单个协程所独有） 的变量，而在 Go 语言中并没有这个概念，因此需要在函数调用的时候传递 context。</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-keyword">package</span> main
+
+<span class="hljs-keyword">import</span> (
+	<span class="hljs-string">"context"</span>
+	<span class="hljs-string">"fmt"</span>
+)
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> {
+	ctx := context.Background()
+	process(ctx)
+
+	ctx = context.WithValue(ctx, <span class="hljs-string">"traceId"</span>, <span class="hljs-string">"qcrao-2019"</span>)
+	process(ctx)
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">process</span><span class="hljs-params">(ctx context.Context)</span></span> {
+	traceId, ok := ctx.Value(<span class="hljs-string">"traceId"</span>).(<span class="hljs-type">string</span>)
+	<span class="hljs-keyword">if</span> ok {
+		fmt.Printf(<span class="hljs-string">"process over. trace_id=%s\n"</span>, traceId)
+	} <span class="hljs-keyword">else</span> {
+		fmt.Printf(<span class="hljs-string">"process over. no trace_id\n"</span>)
+	}
+}
+</code></pre>
+<p>运行结果：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-shell highlighter-hljs hljs">process over. no trace_id
+process over. trace_id=qcrao-2019
+</code></pre>
+<p>第一次调用 process 函数时，ctx 是一个空的 context，自然取不出来 traceId。第二次，通过 <code>WithValue</code> 函数创建了一个 context，并赋上了 <code>traceId</code> 这个 key，自然就能取出来传入的 value 值。</p>
+<p>当然，现实场景中可能是从一个 HTTP 请求中获取到的 Request-ID。所以，下面这个样例可能更适合：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-keyword">const</span> requestIDKey <span class="hljs-type">int</span> = <span class="hljs-number">0</span>
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">WithRequestID</span><span class="hljs-params">(next http.Handler)</span></span> http.Handler {
+	<span class="hljs-keyword">return</span> http.HandlerFunc(
+		<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(rw http.ResponseWriter, req *http.Request)</span></span> {
+			<span class="hljs-comment">// 从 header 中提取 request-id</span>
+			reqID := req.Header.Get(<span class="hljs-string">"X-Request-ID"</span>)
+			<span class="hljs-comment">// 创建 valueCtx。使用自定义的类型，不容易冲突</span>
+			ctx := context.WithValue(
+				req.Context(), requestIDKey, reqID)
+			
+			<span class="hljs-comment">// 创建新的请求</span>
+			req = req.WithContext(ctx)
+			
+			<span class="hljs-comment">// 调用 HTTP 处理函数</span>
+			next.ServeHTTP(rw, req)
+		}
+	)
+}
+
+<span class="hljs-comment">// 获取 request-id</span>
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">GetRequestID</span><span class="hljs-params">(ctx context.Context)</span></span> <span class="hljs-type">string</span> {
+	ctx.Value(requestIDKey).(<span class="hljs-type">string</span>)
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Handle</span><span class="hljs-params">(rw http.ResponseWriter, req *http.Request)</span></span> {
+	<span class="hljs-comment">// 拿到 reqId，后面可以记录日志等等</span>
+	reqID := GetRequestID(req.Context())
+	...
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> {
+	handler := WithRequestID(http.HandlerFunc(Handle))
+	http.ListenAndServe(<span class="hljs-string">"/"</span>, handler)
+}
+</code></pre>
+<h2 id="取消-goroutine">取消 goroutine<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h2>
+<p>我们先来设想一个场景：打开外卖的订单页，地图上显示外卖小哥的位置，而且是每秒更新 1 次。app 端向后台发起 websocket 连接（现实中可能是轮询）请求后，后台启动一个协程，每隔 1 秒计算 1 次小哥的位置，并发送给端。如果用户退出此页面，则后台需要“取消”此过程，退出 goroutine，系统回收资源。</p>
+<p>后端可能的实现如下：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Perform</span><span class="hljs-params">()</span></span> {
+    <span class="hljs-keyword">for</span> {
+        calculatePos()
+        sendResult()
+        time.Sleep(time.Second)
+    }
+}
+</code></pre>
+<p>如果需要实现“取消”功能，并且在不了解 context 功能的前提下，可能会这样做：给函数增加一个指针型的 bool 变量，在 for 语句的开始处判断 bool 变量是发由 true 变为 false，如果改变，则退出循环。</p>
+<p>上面给出的简单做法，可以实现想要的效果，没有问题，但是并不优雅，并且一旦协程数量多了之后，并且各种嵌套，就会很麻烦。优雅的做法，自然就要用到 context。</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Perform</span><span class="hljs-params">(ctx context.Context)</span></span> {
+    <span class="hljs-keyword">for</span> {
+        calculatePos()
+        sendResult()
+
+        <span class="hljs-keyword">select</span> {
+        <span class="hljs-keyword">case</span> &lt;-ctx.Done():
+            <span class="hljs-comment">// 被取消，直接返回</span>
+            <span class="hljs-keyword">return</span>
+        <span class="hljs-keyword">case</span> &lt;-time.After(time.Second):
+            <span class="hljs-comment">// block 1 秒钟 </span>
+        }
+    }
+}
+</code></pre>
+<p>主流程可能是这样的：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go">ctx, cancel := context.WithTimeout(context.Background(), time.Hour)
+<span class="hljs-keyword">go</span> Perform(ctx)
+
+<span class="hljs-comment">// ……</span>
+<span class="hljs-comment">// app 端返回页面，调用cancel 函数</span>
+cancel()
+</code></pre>
+<p>注意一个细节，WithTimeOut 函数返回的 context 和 cancelFun 是分开的。context 本身并没有取消函数，这样做的原因是取消函数只能由外层函数调用，防止子节点 context 调用取消函数，从而严格控制信息的流向：由父节点 context 流向子节点 context。</p>
+<h2 id="防止-goroutine-泄漏">防止 goroutine 泄漏<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h2>
+<p>前面那个例子里，goroutine 还是会自己执行完，最后返回，只不过会多浪费一些系统资源。这里改编一个“如果不用 context 取消，goroutine 就会泄漏的例子”，来自参考资料：<code>【避免协程泄漏】</code>。</p>
+<pre class="highlighter-hljs" highlighted="true" has-selection="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">gen</span><span class="hljs-params">()</span></span> &lt;-<span class="hljs-keyword">chan</span> <span class="hljs-type">int</span> {
+	ch := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-type">int</span>)
+	<span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> {
+		<span class="hljs-keyword">var</span> n <span class="hljs-type">int</span>
+		<span class="hljs-keyword">for</span> {
+			ch &lt;- n
+			n++
+			time.Sleep(time.Second)
+		}
+	}()
+	<span class="hljs-keyword">return</span> ch
+}
+</code></pre>
+<p>这是一个可以生成无限整数的协程，但如果我只需要它产生的前 5 个数，那么就会发生 goroutine 泄漏：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> {
+	<span class="hljs-keyword">for</span> n := <span class="hljs-keyword">range</span> gen() {
+		fmt.Println(n)
+		<span class="hljs-keyword">if</span> n == <span class="hljs-number">5</span> {
+			<span class="hljs-keyword">break</span>
+		}
+	}
+	<span class="hljs-comment">// ……</span>
+}
+</code></pre>
+<p>当 n == 5 的时候，直接 break 掉。那么 gen 函数的协程就会执行无限循环，永远不会停下来。发生了 goroutine 泄漏。</p>
+<p>用 context 改进这个例子：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">gen</span><span class="hljs-params">(ctx context.Context)</span></span> &lt;-<span class="hljs-keyword">chan</span> <span class="hljs-type">int</span> {
+	ch := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-type">int</span>)
+	<span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> {
+		<span class="hljs-keyword">var</span> n <span class="hljs-type">int</span>
+		<span class="hljs-keyword">for</span> {
+			<span class="hljs-keyword">select</span> {
+			<span class="hljs-keyword">case</span> &lt;-ctx.Done():
+				<span class="hljs-keyword">return</span>
+			<span class="hljs-keyword">case</span> ch &lt;- n:
+				n++
+				time.Sleep(time.Second)
+			}
+		}
+	}()
+	<span class="hljs-keyword">return</span> ch
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> {
+	ctx, cancel := context.WithCancel(context.Background())
+	<span class="hljs-keyword">defer</span> cancel() <span class="hljs-comment">// 避免其他地方忘记 cancel，且重复调用不影响</span>
+
+	<span class="hljs-keyword">for</span> n := <span class="hljs-keyword">range</span> gen(ctx) {
+		fmt.Println(n)
+		<span class="hljs-keyword">if</span> n == <span class="hljs-number">5</span> {
+			cancel()
+			<span class="hljs-keyword">break</span>
+		}
+	}
+	<span class="hljs-comment">// ……</span>
+}
+</code></pre>
+<p>增加一个 context，在 break 前调用 cancel 函数，取消 goroutine。gen 函数在接收到取消信号后，直接退出，系统回收资源。</p>
+<h1 id="context-真的这么好吗">context 真的这么好吗<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h1>
+<p>读完全文，你一定有这种感觉：context 就是为 server 而设计的。说什么处理一个请求，需要启动多个 goroutine 并行地去处理，并且在这些 goroutine 之间还要传递一些共享的数据等等，这些都是写一个 server 要做的事。</p>
+<p>没错，Go 很适合写 server，但它终归是一门通用的语言。你在用 Go 做 Leetcode 上面的题目的时候，肯定不会认为它和一般的语言有什么差别。所以，很多特性好不好，应该从 <code>Go 只是一门普通的语言，很擅长写 server</code> 的角度来看。</p>
+<p>从这个角度来看，context 并没有那么美好。Go 官方建议我们把 Context 作为函数的第一个参数，甚至连名字都准备好了。这造成一个后果：因为我们想控制所有的协程的取消动作，所以需要在几乎所有的函数里加上一个 Context 参数。很快，我们的代码里，context 将像病毒一样扩散的到处都是。</p>
+<p>在参考资料<code>【Go2 应该去掉 context】</code>这篇英文博客里，作者甚至调侃说：如果要把 Go 标准库的大部分函数都加上 context 参数的话，例如下面这样：</p>
+<pre class="highlighter-hljs" highlighted="true"><code class="language-golang highlighter-hljs hljs language-go">n, err := r.Read(context.TODO(), p)
+</code></pre>
+<p>就给我来一枪吧！</p>
+<p>原文是这样说的：<code>put a bullet in my head, please.</code>我当时看到这句话的时候，会心一笑。这可能就是陶渊明说的：每有会意，便欣然忘食。当然，我是在晚饭会看到这句话的。</p>
+<p>为了表达自己对 context 并没有什么好感，作者接着又说了一句：If you use ctx.Value in my (non-existent) company, you’re fired. 简直太幽默了，哈哈。</p>
+<p>另外，像 <code>WithCancel</code>、<code>WithDeadline</code>、<code>WithTimeout</code>、<code>WithValue</code> 这些创建函数，实际上是创建了一个个的链表结点而已。我们知道，对链表的操作，通常都是 <code>O(n)</code> 复杂度的，效率不高。</p>
+<p>那么，context 包到底解决了什么问题呢？答案是：<code>cancelation</code>。仅管它并不完美，但它确实很简洁地解决了问题。</p>
+<h1 id="总结">总结<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h1>
+<p>到这里，整个 context 包的内容就全部讲完了。源码非常短，很适合学习，一定要去读一下。</p>
+<p>context 包是 Go 1.7 引入的标准库，主要用于在 goroutine 之间传递取消信号、超时时间、截止时间以及一些共享的值等。它并不是太完美，但几乎成了并发控制和超时控制的标准做法。</p>
+<p>使用上，先创建一个根节点的 context，之后根据库提供的四个函数创建相应功能的子节点 context。由于它是并发安全的，所以可以放心地传递。</p>
+<p>当使用 context 作为函数参数时，直接把它放在第一个参数的位置，并且命名为 ctx。另外，不要把 context 嵌套在自定义的类型里。</p>
+<p>最后，大家下次在看到代码里有用到 context 的，观察下是怎么使用的，肯定逃不出我们讲的几种类型。熟悉之后会发现：context 可能并不完美，但它确实简洁高效地解决了问题。</p>
+<h1 id="参考资料">参考资料<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button></h1>
+<p>【context 官方博客】<a href="https://blog.golang.org/context" target="_blank" rel="noopener nofollow">https://blog.golang.org/context</a></p>
+<p>【今日头条构建Go的实践】<a href="https://zhuanlan.zhihu.com/p/26695984" target="_blank" rel="noopener nofollow">https://zhuanlan.zhihu.com/p/26695984</a></p>
+<p>【飞雪无情的博客】<a href="https://www.flysnow.org/2017/05/12/go-in-action-go-context.html" target="_blank" rel="noopener nofollow">https://www.flysnow.org/2017/05/12/go-in-action-go-context.html</a></p>
+<p>【context 源码】<a href="https://juejin.im/post/5a6873fef265da3e317e55b6" target="_blank" rel="noopener nofollow">https://juejin.im/post/5a6873fef265da3e317e55b6</a></p>
+<p>【腾讯云源码阅读】<a href="https://cloud.tencent.com/developer/section/1140703" target="_blank" rel="noopener nofollow">https://cloud.tencent.com/developer/section/1140703</a></p>
+<p>【更宏观地一些思考，english】<a href="https://siadat.github.io/post/context" target="_blank" rel="noopener nofollow">https://siadat.github.io/post/context</a></p>
+<p>【避免协程泄漏】<a href="https://rakyll.org/leakingctx/" target="_blank" rel="noopener nofollow">https://rakyll.org/leakingctx/</a></p>
+<p>【应用分类】<a href="https://dreamerjonson.com/2019/05/09/golang-73-context/index.html" target="_blank" rel="noopener nofollow">https://dreamerjonson.com/2019/05/09/golang-73-context/index.html</a></p>
+<p>【官方文档示例翻译版】<a href="https://brantou.github.io/2017/05/19/go-concurrency-patterns-context/" target="_blank" rel="noopener nofollow">https://brantou.github.io/2017/05/19/go-concurrency-patterns-context/</a></p>
+<p>【例子，english】<a href="http://p.agnihotry.com/post/understanding_the_context_package_in_golang/" target="_blank" rel="noopener nofollow">http://p.agnihotry.com/post/understanding_the_context_package_in_golang/</a></p>
+<p>【Go2 应该去掉 context】<a href="https://faiface.github.io/post/context-should-go-away-go2/" target="_blank" rel="noopener nofollow">https://faiface.github.io/post/context-should-go-away-go2/</a></p>
+<p>【源码，比较详细】<a href="https://juejin.im/post/5c1514c86fb9a049b82a5acb" target="_blank" rel="noopener nofollow">https://juejin.im/post/5c1514c86fb9a049b82a5acb</a></p>
+<p>【Golang Context 是好的设计吗？】<a href="https://segmentfault.com/a/1190000017394302" target="_blank" rel="noopener nofollow">https://segmentfault.com/a/1190000017394302</a></p>
+<p>【今日头条的 Go 实践】<a href="https://36kr.com/p/5073181" target="_blank" rel="noopener nofollow">https://36kr.com/p/5073181</a></p>
+<p>【实例】<a href="https://zhuanlan.zhihu.com/p/60180409" target="_blank" rel="noopener nofollow">https://zhuanlan.zhihu.com/p/60180409</a></p>
+<p><img src="./深度解密Go语言之context - Stefno - 博客园_files/51420568-305b1800-1bce-11e9-962a-52b12be7eb2e.png" alt="QR" loading="lazy" class="medium-zoom-image"></p>
+
+</div>
+<div class="clear"></div>
+<div id="blog_post_info_block" role="contentinfo">
+
+
+
+<div id="EntryTag">
+    标签: 
+            <a href="https://www.cnblogs.com/qcrao-2018/tag/Golang/">Golang</a>
+</div>
+    <div id="blog_post_info">
+<div id="green_channel">
+        <a href="javascript:void(0);" id="green_channel_digg" onclick="DiggIt(11007503,cb_blogId,1);green_channel_success(this,&#39;谢谢推荐！&#39;);">好文要顶</a>
+        <a id="green_channel_follow" onclick="follow(&#39;4fd66084-ac69-4232-263c-08d5c3af5c24&#39;);" href="javascript:void(0);">关注我</a>
+    <a id="green_channel_favorite" onclick="AddToWz(cb_entryId);return false;" href="javascript:void(0);">收藏该文</a>
+    <a id="green_channel_wechat" href="javascript:void(0);" onclick="shareManager.wechatShare()">微信分享</a>
+</div>
+<div id="author_profile">
+    <div id="author_profile_info" class="author_profile_info">
+            <a href="https://home.cnblogs.com/u/qcrao-2018/" target="_blank"><img src="./深度解密Go语言之context - Stefno - 博客园_files/20180601153542.png" class="author_avatar" alt=""></a>
+        <div id="author_profile_detail" class="author_profile_info">
+            <a href="https://home.cnblogs.com/u/qcrao-2018/">Stefno</a>
+            <br>
+            <a href="https://home.cnblogs.com/u/qcrao-2018/followers/">粉丝 - <span class="follower-count">304</span></a>
+            <a href="https://home.cnblogs.com/u/qcrao-2018/followees/">关注 - <span class="following-count">4</span></a><br>
+        </div>
+    </div>
+    <div class="clear"></div>
+    <div id="author_profile_honor"></div>
+    <div id="author_profile_follow" class="follow-tip">
+                <a href="javascript:void(0);" onclick="follow(&#39;4fd66084-ac69-4232-263c-08d5c3af5c24&#39;);return false;">+加关注</a>
+    </div>
+</div>
+<div id="div_digg">
+    <div class="diggit" onclick="votePost(11007503,&#39;Digg&#39;)">
+        <span class="diggnum" id="digg_count">14</span>
+    </div>
+    <div class="buryit" onclick="votePost(11007503,&#39;Bury&#39;)">
+        <span class="burynum" id="bury_count">0</span>
+    </div>
+    <div class="clear"></div>
+    <div class="diggword" id="digg_tips">
+    </div>
+        <div id="vip_tip"><a class="tip" href="https://cnblogs.vip/" target="_blank">升级成为会员</a></div>
+</div>
+
+<script type="text/javascript">
+    currentDiggType = 0;
+</script>
+</div>
+    <div class="clear"></div>
+    <div id="post_next_prev">
+
+    <a href="https://www.cnblogs.com/qcrao-2018/p/10964692.html" class="p_n_p_prefix">« </a> 上一篇：    <a href="https://www.cnblogs.com/qcrao-2018/p/10964692.html" data-featured-image="" title="发布于 2019-06-03 09:07">深度解密Go语言之unsafe</a>
+    <br>
+    <a href="https://www.cnblogs.com/qcrao-2018/p/11037754.html" class="p_n_p_prefix">» </a> 下一篇：    <a href="https://www.cnblogs.com/qcrao-2018/p/11037754.html" data-featured-image="" title="发布于 2019-06-17 08:22">曹大谈内存重排</a>
+
+</div>
+</div>
+            </div>
+            <div class="postDesc">posted @ 
+<span id="post-date" data-last-update-days="1932.74349516931" data-date-created="BlogServer.Application.Dto.BlogPost.BlogPostDto" data-date-updated="2019-06-12 08:52" aria-expanded="false">2019-06-12 08:46</span>&nbsp;
+<a href="https://www.cnblogs.com/qcrao-2018">Stefno</a>&nbsp;
+阅读(<span id="post_view_count">24648</span>)&nbsp;
+评论(<span id="post_comment_count">6</span>)&nbsp;
+<a href="https://i.cnblogs.com/EditPosts.aspx?postid=11007503" rel="nofollow">编辑</a>&nbsp;
+<a href="javascript:void(0)" onclick="AddToWz(11007503);return false;">收藏</a>&nbsp;
+<a href="javascript:void(0)" onclick="reportManager.report({ currentUserId: &#39;&#39;, targetType: &#39;blogPost&#39;, targetId: &#39;11007503&#39;, targetLink: &#39;https://www.cnblogs.com/qcrao-2018/p/11007503.html&#39;, title: &#39;深度解密Go语言之context&#39; })">举报</a>
+</div>
+        </div>
+	    
+	    
+    </div><!--end: topics 文章、评论容器-->
+</div>
+<script>
+    var cb_entryId = 11007503, cb_entryCreatedDate = '2019-06-12 08:46', cb_postType = 1, cb_postTitle = '深度解密Go语言之context';
+    var allowComments = true, cb_blogId = 434876, cb_blogApp = 'qcrao-2018', cb_blogUserGuid = '4fd66084-ac69-4232-263c-08d5c3af5c24';
+    mermaidRender.render()
+    markdown_highlight()
+    zoomManager.apply("#cnblogs_post_body img:not(.code_img_closed):not(.code_img_opened)");    
+</script>
+<a id="!comments"></a>
+<div id="blog-comments-placeholder"></div>
+<div id="comment_form" class="commentform">
+    <a name="commentform"></a>
+    <div id="divCommentShow"></div>
+    <div id="comment_nav">
+            <a class="comment-nav-left forpc" href="https://cnblogs.vip/" target="_blank">会员力量，点亮园子希望</a>
+        <div class="comment-nav-right">
+            <span id="span_refresh_tips"></span><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#" onclick="return RefreshPage();">刷新页面</a><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html#top">返回顶部</a>
+        </div>
+    </div>
+    <div id="comment_form_container"><div class="login_tips">
+    登录后才能查看或发表评论，立即 <a rel="nofollow" href="javascript:void(0);" class="underline" onclick="return account.login(&#39;!comments&#39;);">登录</a> 或者
+    <a href="https://www.cnblogs.com/">逛逛</a> 博客园首页
+</div>
+</div>
+    <div class="ad_text_commentbox" id="ad_text_under_commentbox"></div>
+        <div id="cnblogs_ch"></div>
+    <div id="opt_under_post"></div>
+        <div id="blog_c1" class="under-post-card">
+            <a href="https://www.cnblogs.com/cmt/p/18302049" rel="nofollow" target="_blank" onclick="countCreativeClicks(&#39;C1-博客园-求救信&#39;)">
+                <img src="./深度解密Go语言之context - Stefno - 博客园_files/35695-20240914114555421-1162088530.jpg" onload="countCreativeImpressions(&#39;C1-博客园-求救信&#39;)" alt="">
+                <span id="c1_impression" style="display:none"></span>
+            </a>
+        </div>
+    <div id="under_post_card1"><div class="under-post-card">
+<b>编辑推荐：</b>
+<br>
+
+· <a href="https://www.cnblogs.com/GuZhenYin/p/18429430" target="_blank">使用.NET并行任务库(TPL)与并行Linq(PLINQ)充分利用多核性能</a>
+    <br>
+· <a href="https://www.cnblogs.com/ivictor/p/18426260" target="_blank">Redis 内存突增时，如何定量分析其内存使用情况</a>
+    <br>
+· <a href="https://www.cnblogs.com/youzhibing/p/18426017" target="_blank">记一次 RabbitMQ 消费者莫名消失问题的排查</a>
+    <br>
+· <a href="https://www.cnblogs.com/hugogoos/p/18424476" target="_blank">C#|.net core 基础 - 深拷贝的五大类N种实现方式</a>
+    <br>
+· <a href="https://www.cnblogs.com/Tangtang1997/p/18420640" target="_blank">EntityFramework Core并发迁移解决方案</a>
+    <br>
+</div></div>
+    <div id="under_post_card2"><div class="itnews under-post-card">
+    <b>阅读排行：</b>
+    <br>
+ ·          <a href="https://www.cnblogs.com/cmt/p/18425914" target="_blank">救园最后7天：「坚持你所相信的，相信你所坚持的」</a>
+        <br>
+ ·          <a href="https://www.cnblogs.com/xueweihan/p/18428294" target="_blank">让人眼前一亮的开源项目「GitHub 热点速览」</a>
+        <br>
+ ·          <a href="https://www.cnblogs.com/1312mn/p/18418452" target="_blank">.NET 8 + Vue/UniApp 高性能前后端分离框架</a>
+        <br>
+ ·          <a href="https://www.cnblogs.com/sheng_chao/p/18431157" target="_blank">.net 到底行不行！2000 人在线的客服系统真实屏录演示（附技术详解） </a>
+        <br>
+ ·          <a href="https://www.cnblogs.com/37Y37/p/18431461" target="_blank">裁员，这一次终于轮到了我</a>
+        <br>
+</div></div>
+    <div id="HistoryToday" class="under-post-card"></div>
+    <script type="text/javascript">
+        var commentManager = new blogCommentManager();
+        commentManager.renderComments(0);
+        fixPostBody();
+        window.footnoteTipManager.generateFootnoteTips();
+
+            window.tocManager.displayDisableTocTips = false;
+            window.tocManager.generateToc();
+            
+                setTimeout(function() { countViews(cb_blogId, cb_entryId); }, 50);
+            
+            deliverT2();
+            deliverC1C2();
+            loadNewsAndKb();
+            
+                LoadPostCategoriesTags(cb_blogId, cb_entryId);
+            
+            LoadPostInfoBlock(cb_blogId, cb_entryId, cb_blogApp, cb_blogUserGuid);
+            GetPrevNextPost(cb_entryId, cb_blogId, cb_entryCreatedDate, cb_postType);
+            loadOptUnderPost();
+            GetHistoryToday(cb_blogId, cb_blogApp, cb_entryCreatedDate);
+                </script>
+</div>
+
+	</div><!--end: forFlow -->
+	</div><!--end: mainContent 主体内容容器-->
+	<div id="sideBar">
+		<div id="sideBarMain">
+			<div id="sidebar_news" class="newsItem">
+    <h3 class="catListTitle">公告</h3>
+<div id="blog-news">    
+    <div id="sidebar_news_content"><div id="blog-news">微信公众号：<br>
+<!-- https://images.cnblogs.com/cnblogs_com/qcrao-2018/1544454/o_%E5%8E%9F%E5%A7%8B%E4%BA%8C%E7%BB%B4%E7%A0%81.JPG -->
+<img border="0" src="./深度解密Go语言之context - Stefno - 博客园_files/o_原始二维码.JPG" alt="微信公众号" title="微信公众号" width="100%" height="100%"><br>
+<div id="profile_block">
+    昵称：
+    <a href="https://home.cnblogs.com/u/qcrao-2018/">
+        Stefno
+    </a>
+    <br>
+    园龄：
+    <a href="https://home.cnblogs.com/u/qcrao-2018/" title="入园时间：2018-05-28">
+        6年3个月
+    </a>
+    <br>
+    粉丝：
+    <a class="follower-count" href="https://home.cnblogs.com/u/qcrao-2018/followers/">
+        304
+    </a>
+    <br>
+    关注：
+    <a class="folowing-count" href="https://home.cnblogs.com/u/qcrao-2018/followees/">
+        4
+    </a>
+    <div id="p_b_follow" class="follow-tip">
+<a href="javascript:void(0)" onclick="follow(&#39;4fd66084-ac69-4232-263c-08d5c3af5c24&#39;)">+加关注</a></div>
+    <script>getFollowStatus('4fd66084-ac69-4232-263c-08d5c3af5c24');</script>
+</div>
+</div></div>
+</div>
+<script>loadBlogNews();</script>
+
+ 
+</div>
+<div id="sidebar_c3"></div>
+			<div id="blog-calendar" style="">
+
+<table id="blogCalendar" class="Cal" cellspacing="0" cellpadding="0" title="Calendar" border="0">
+    <tbody>
+        <tr>
+            <td colspan="7">
+                <table class="CalTitle" cellspacing="0" border="0">
+                    <tbody>
+                        <tr>
+                            <td class="CalNextPrev">
+                                <a href="javascript:void(0);" onclick="loadBlogCalendar(&#39;2024/08/26&#39;); return false;">&lt;</a>
+                            </td>
+                            <td align="center">2024年9月</td>
+                            <td align="right" class="CalNextPrev">
+                                <a href="javascript:void(0);" onclick="loadBlogCalendar(&#39;2024/10/26&#39;); return false;">&gt;</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    <tr>
+        <th class="CalDayHeader" align="center" abbr="日" scope="col">日</th>
+        <th class="CalDayHeader" align="center" abbr="一" scope="col">一</th>
+        <th class="CalDayHeader" align="center" abbr="二" scope="col">二</th>
+        <th class="CalDayHeader" align="center" abbr="三" scope="col">三</th>
+        <th class="CalDayHeader" align="center" abbr="四" scope="col">四</th>
+        <th class="CalDayHeader" align="center" abbr="五" scope="col">五</th>
+        <th class="CalDayHeader" align="center" abbr="六" scope="col">六</th>
+    </tr>
+            <tr>
+                        <td class="CalWeekendDay" align="center">
+                            1
+                        </td>
+                        <td class="" align="center">
+                            2
+                        </td>
+                        <td class="" align="center">
+                            3
+                        </td>
+                        <td class="" align="center">
+                            4
+                        </td>
+                        <td class="" align="center">
+                            5
+                        </td>
+                        <td class="" align="center">
+                            6
+                        </td>
+                    <td class="CalWeekendDay" align="center">
+                        7
+                    </td>
+            </tr>
+                <tr>
+                        <td class="CalWeekendDay" align="center">
+                            8
+                        </td>
+                            <td class="" align="center">
+                                9
+                            </td>
+                            <td class="" align="center">
+                                10
+                            </td>
+                            <td class="" align="center">
+                                11
+                            </td>
+                            <td class="" align="center">
+                                12
+                            </td>
+                            <td class="" align="center">
+                                13
+                            </td>
+                        <td class="CalWeekendDay" align="center">
+                            14
+                        </td>
+                </tr>
+                <tr>
+                        <td class="CalWeekendDay" align="center">
+                            15
+                        </td>
+                            <td class="" align="center">
+                                16
+                            </td>
+                            <td class="" align="center">
+                                17
+                            </td>
+                            <td class="" align="center">
+                                18
+                            </td>
+                            <td class="" align="center">
+                                19
+                            </td>
+                            <td class="" align="center">
+                                20
+                            </td>
+                        <td class="CalWeekendDay" align="center">
+                            21
+                        </td>
+                </tr>
+                <tr>
+                        <td class="CalWeekendDay" align="center">
+                            22
+                        </td>
+                            <td class="" align="center">
+                                23
+                            </td>
+                            <td class="" align="center">
+                                24
+                            </td>
+                            <td class="" align="center">
+                                25
+                            </td>
+                            <td class="CalTodayDay" align="center">
+                                26
+                            </td>
+                            <td class="" align="center">
+                                27
+                            </td>
+                        <td class="CalWeekendDay" align="center">
+                            28
+                        </td>
+                </tr>
+                <tr>
+                        <td class="CalWeekendDay" align="center">
+                            29
+                        </td>
+                            <td class="" align="center">
+                                30
+                            </td>
+                            <td class="CalOtherMonthDay" align="center">
+                                1
+                            </td>
+                            <td class="CalOtherMonthDay" align="center">
+                                2
+                            </td>
+                            <td class="CalOtherMonthDay" align="center">
+                                3
+                            </td>
+                            <td class="CalOtherMonthDay" align="center">
+                                4
+                            </td>
+                        <td class="CalOtherMonthDay" align="center">
+                            5
+                        </td>
+                </tr>
+                <tr>
+                        <td class="CalOtherMonthDay" align="center">
+                            6
+                        </td>
+                            <td class="CalOtherMonthDay" align="center">
+                                7
+                            </td>
+                            <td class="CalOtherMonthDay" align="center">
+                                8
+                            </td>
+                            <td class="CalOtherMonthDay" align="center">
+                                9
+                            </td>
+                            <td class="CalOtherMonthDay" align="center">
+                                10
+                            </td>
+                            <td class="CalOtherMonthDay" align="center">
+                                11
+                            </td>
+                        <td class="CalOtherMonthDay" align="center">
+                            12
+                        </td>
+                </tr>
+    </tbody>
+</table></div><script>loadBlogDefaultCalendar();</script>			
+			<div id="leftcontentcontainer">
+				<div id="blog-sidecolumn"><!-- 搜索 -->
+<div id="sidebar_search" class="sidebar-block">
+    <div class="mySearch my-search">
+        <h3 class="catListTitle">搜索</h3>
+        <div id="sidebar_search_box">
+            <div id="widget_my_zzk" class="div_my_zzk">
+                <input type="text" id="q" onkeydown="return zzk_go_enter(event);" class="input_my_zzk">&nbsp;<input onclick="zzk_go()" type="button" value="找找看" id="btnZzk" class="btn_my_zzk">
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<!-- 常用链接 -->
+<div id="sidebar_shortcut" class="sidebar-block"><div class="catListLink">
+<h3 class="catListTitle">
+常用链接
+</h3>
+<ul>
+    <li><a href="https://www.cnblogs.com/qcrao-2018/p/" title="我的博客的随笔列表">我的随笔</a></li>
+<li><a href="https://www.cnblogs.com/qcrao-2018/MyComments.html" title="我的发表过的评论列表">我的评论</a></li>
+<li><a href="https://www.cnblogs.com/qcrao-2018/OtherPosts.html" title="我评论过的随笔列表">我的参与</a></li>
+<li><a href="https://www.cnblogs.com/qcrao-2018/comments" title="我的博客的评论列表">最新评论</a></li>
+<li><a href="https://www.cnblogs.com/qcrao-2018/tag/" title="我的博客的标签列表">我的标签</a></li>
+
+</ul>
+</div>
+
+</div>
+
+<!-- 最新随笔 -->
+
+
+<!-- 我的标签 -->
+<div id="sidebar_toptags" class="sidebar-block"><div class="catListTag">
+    <h3 class="catListTitle"><a href="https://www.cnblogs.com/qcrao-2018/tag/" class="sidebar-card-title-a">我的标签</a></h3>
+<ul>
+        <li>
+            <a href="https://www.cnblogs.com/qcrao-2018/tag/Golang/">Golang<span class="tag-count">(21)</span></a>
+        </li>
+        <li>
+            <a href="https://www.cnblogs.com/qcrao-2018/tag/TCP%2FIP/">TCP/IP<span class="tag-count">(2)</span></a>
+        </li>
+        <li>
+            <a href="https://www.cnblogs.com/qcrao-2018/tag/wireshark/">wireshark<span class="tag-count">(1)</span></a>
+        </li>
+        <li>
+            <a href="https://www.cnblogs.com/qcrao-2018/tag/TCP/">TCP<span class="tag-count">(1)</span></a>
+        </li>
+        <li>
+            <a href="https://www.cnblogs.com/qcrao-2018/tag/interface/">interface<span class="tag-count">(1)</span></a>
+        </li>
+        <li>
+            <a href="https://www.cnblogs.com/qcrao-2018/tag/HTTP/">HTTP<span class="tag-count">(1)</span></a>
+        </li>
+        <li>
+            <a href="https://www.cnblogs.com/qcrao-2018/tag/defer/">defer<span class="tag-count">(1)</span></a>
+        </li>
+        <li>
+            <a href="https://www.cnblogs.com/qcrao-2018/tag/channel/">channel<span class="tag-count">(1)</span></a>
+        </li>
+        <li>
+            <a href="https://www.cnblogs.com/qcrao-2018/tag/%E5%86%99%E4%BD%9C/">写作<span class="tag-count">(1)</span></a>
+        </li>
+        <li>
+            <a href="https://www.cnblogs.com/qcrao-2018/tag/%E7%BD%91%E7%BB%9C/">网络<span class="tag-count">(1)</span></a>
+        </li>
+    <li>
+        <a href="https://www.cnblogs.com/qcrao-2018/tag/">更多</a>
+    </li>
+
+</ul>
+</div>
+
+</div>
+
+<!-- 积分与排名 -->
+<div id="sidebar_scorerank" class="sidebar-block"><div class="catListBlogRank">
+<h3 class="catListTitle">积分与排名</h3>
+<ul>
+	<li class="liScore">
+		积分 -	
+78942
+	</li>
+	<li class="liRank">
+		排名 -	
+20151
+	</li>
+</ul>
+</div>
+
+
+
+</div>
+
+<!-- 随笔分类、随笔档案、文章分类、新闻分类、相册、链接 -->
+<div id="sidebar_categories">
+
+    <div id="sidebar_postarchive" class="catListPostArchive sidebar-block">
+        <h3 class="catListTitle">
+            
+随笔档案
+
+
+        </h3>
+
+        <ul>
+
+                <li data-category-list-item-visible="true" style="display: block">
+                    
+<a href="https://www.cnblogs.com/qcrao-2018/p/archive/2022/11" style="--cnb-category-item-link-indent-size: calc(0 * 1em)" class="category-item-link" rel="" target="">2022年11月(1)</a>
+ 
+                </li>                
+                <li data-category-list-item-visible="true" style="display: block">
+                    
+<a href="https://www.cnblogs.com/qcrao-2018/p/archive/2021/03" style="--cnb-category-item-link-indent-size: calc(0 * 1em)" class="category-item-link" rel="" target="">2021年3月(1)</a>
+ 
+                </li>                
+                <li data-category-list-item-visible="true" style="display: block">
+                    
+<a href="https://www.cnblogs.com/qcrao-2018/p/archive/2021/01" style="--cnb-category-item-link-indent-size: calc(0 * 1em)" class="category-item-link" rel="" target="">2021年1月(4)</a>
+ 
+                </li>                
+                <li data-category-list-item-visible="true" style="display: block">
+                    
+<a href="https://www.cnblogs.com/qcrao-2018/p/archive/2020/06" style="--cnb-category-item-link-indent-size: calc(0 * 1em)" class="category-item-link" rel="" target="">2020年6月(1)</a>
+ 
+                </li>                
+                <li data-category-list-item-visible="true" style="display: block">
+                    
+<a href="https://www.cnblogs.com/qcrao-2018/p/archive/2020/04" style="--cnb-category-item-link-indent-size: calc(0 * 1em)" class="category-item-link" rel="" target="">2020年4月(1)</a>
+ 
+                </li>                
+                <li data-category-list-item-visible="true" style="display: block">
+                    
+<a href="https://www.cnblogs.com/qcrao-2018/p/archive/2020/03" style="--cnb-category-item-link-indent-size: calc(0 * 1em)" class="category-item-link" rel="" target="">2020年3月(1)</a>
+ 
+                </li>                
+                <li data-category-list-item-visible="true" style="display: block">
+                    
+<a href="https://www.cnblogs.com/qcrao-2018/p/archive/2019/11" style="--cnb-category-item-link-indent-size: calc(0 * 1em)" class="category-item-link" rel="" target="">2019年11月(1)</a>
+ 
+                </li>                
+                <li data-category-list-item-visible="true" style="display: block">
+                    
+<a href="https://www.cnblogs.com/qcrao-2018/p/archive/2019/09" style="--cnb-category-item-link-indent-size: calc(0 * 1em)" class="category-item-link" rel="" target="">2019年9月(2)</a>
+ 
+                </li>                
+                <li data-category-list-item-visible="true" style="display: block">
+                    
+<a href="https://www.cnblogs.com/qcrao-2018/p/archive/2019/07" style="--cnb-category-item-link-indent-size: calc(0 * 1em)" class="category-item-link" rel="" target="">2019年7月(3)</a>
+ 
+                </li>                
+                <li data-category-list-item-visible="true" style="display: block">
+                    
+<a href="https://www.cnblogs.com/qcrao-2018/p/archive/2019/06" style="--cnb-category-item-link-indent-size: calc(0 * 1em)" class="category-item-link" rel="" target="">2019年6月(3)</a>
+ 
+                </li>                
+                <li data-category-list-item-visible="true" style="display: block">
+                    
+<a href="https://www.cnblogs.com/qcrao-2018/p/archive/2019/05" style="--cnb-category-item-link-indent-size: calc(0 * 1em)" class="category-item-link" rel="" target="">2019年5月(2)</a>
+ 
+                </li>                
+                <li data-category-list-item-visible="true" style="display: block">
+                    
+<a href="https://www.cnblogs.com/qcrao-2018/p/archive/2019/04" style="--cnb-category-item-link-indent-size: calc(0 * 1em)" class="category-item-link" rel="" target="">2019年4月(2)</a>
+ 
+                </li>                
+                <li data-category-list-item-visible="true" style="display: block">
+                    
+<a href="https://www.cnblogs.com/qcrao-2018/p/archive/2019/03" style="--cnb-category-item-link-indent-size: calc(0 * 1em)" class="category-item-link" rel="" target="">2019年3月(2)</a>
+ 
+                </li>                
+                <li data-category-list-item-visible="true" style="display: block">
+                    
+<a href="https://www.cnblogs.com/qcrao-2018/p/archive/2019/02" style="--cnb-category-item-link-indent-size: calc(0 * 1em)" class="category-item-link" rel="" target="">2019年2月(2)</a>
+ 
+                </li>                
+                <li data-category-list-item-visible="true" style="display: block">
+                    
+<a href="https://www.cnblogs.com/qcrao-2018/p/archive/2019/01" style="--cnb-category-item-link-indent-size: calc(0 * 1em)" class="category-item-link" rel="" target="">2019年1月(2)</a>
+ 
+                </li>                
+                <li data-category-list-item-visible="false" style="display: none">
+                    
+<a href="https://www.cnblogs.com/qcrao-2018/p/archive/2018/12" style="--cnb-category-item-link-indent-size: calc(0 * 1em)" class="category-item-link" rel="" target="">2018年12月(1)</a>
+ 
+                </li>                
+            <li>
+                <a href="javascript:void(0)" onclick="sideColumnManager.loadMore(this)">更多</a>
+            </li>
+        </ul>
+
+
+    </div>    
+</div>
+
+<!-- 最新评论 -->
+<!-- 阅读排行榜 -->
+<div id="sidebar_topviewedposts" class="sidebar-block"><div class="catListView">
+    <h3 class="catListTitle">
+        <a href="https://www.cnblogs.com/qcrao-2018/most-viewed" class="sidebar-card-title-a">
+    阅读排行榜
+</a>
+
+    </h3>
+    <div id="TopViewPostsBlock">
+        <ul style="word-break:break-all">
+                    <li>
+                        <a href="https://www.cnblogs.com/qcrao-2018/p/12833787.html">
+                            1. 深度解密 Go 语言之 sync.map(34930)
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.cnblogs.com/qcrao-2018/p/12736031.html">
+                            2. 深度解密 Go 语言之 sync.Pool(31959)
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.cnblogs.com/qcrao-2018/p/11832732.html">
+                            3. 深度解密Go语言之 pprof(25288)
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html">
+                            4. 深度解密Go语言之context(24647)
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.cnblogs.com/qcrao-2018/p/10903807.html">
+                            5. 深度解密Go语言之map(21431)
+                        </a>
+                    </li>
+        </ul>
+    </div>
+</div></div>
+
+<!-- 评论排行榜 -->
+<div id="sidebar_topcommentedposts" class="sidebar-block"><div class="catListFeedback">
+    <h3 class="catListTitle">
+        <a href="https://www.cnblogs.com/qcrao-2018/most-commented" class="sidebar-card-title-a">评论排行榜</a>
+
+    </h3>
+    <div id="TopFeedbackPostsBlock">
+        <ul style="word-break:break-all">
+                    <li>
+                        <a href="https://www.cnblogs.com/qcrao-2018/p/10182185.html">
+                            1. “三次握手，四次挥手”你真的懂吗？(22)
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.cnblogs.com/qcrao-2018/p/10562216.html">
+                            2. 深入Go的底层，带你走近一群有追求的人(13)
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.cnblogs.com/qcrao-2018/p/10285348.html">
+                            3. 深度解密HTTP通信细节(10)
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.cnblogs.com/qcrao-2018/p/11538387.html">
+                            4. Golang error 的突围(9)
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.cnblogs.com/qcrao-2018/p/11124360.html">
+                            5. Go 程序是怎样跑起来的(9)
+                        </a>
+                    </li>
+        </ul>
+    </div>
+</div></div>
+
+<!-- 推荐排行榜 -->
+<div id="sidebar_topdiggedposts" class="sidebar-block">
+<div id="topdigg_posts_wrap">
+    <div class="catListView">
+        <h3 class="catListTitle">
+            <a href="https://www.cnblogs.com/qcrao-2018/most-liked" class="sidebar-card-title-a">推荐排行榜</a>
+
+        </h3>
+        <div id="TopDiggPostsBlock">
+            <ul style="word-break: break-all">
+                        <li>
+                            <a href="https://www.cnblogs.com/qcrao-2018/p/10182185.html">
+                                1. “三次握手，四次挥手”你真的懂吗？(21)
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.cnblogs.com/qcrao-2018/p/11124360.html">
+                                2. Go 程序是怎样跑起来的(20)
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.cnblogs.com/qcrao-2018/p/14490148.html">
+                                3. 那些年我们一起追过的大佬(15)
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html">
+                                4. 深度解密Go语言之context(14)
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.cnblogs.com/qcrao-2018/p/10903807.html">
+                                5. 深度解密Go语言之map(14)
+                            </a>
+                        </li>
+            </ul>
+        </div>
+    </div>
+</div></div><div id="sidebar_recentcomments" class="sidebar-block"><div class="catListComment">
+<h3 class="catListTitle"><a href="https://www.cnblogs.com/qcrao-2018/comments" class="sidebar-card-title-a">最新评论</a></h3>
+    <div class="RecentCommentBlock">
+        <ul>
+                <li class="recent_comment_title"><a href="https://www.cnblogs.com/qcrao-2018/p/11007503.html">1. Re:深度解密Go语言之context</a></li>
+                <li class="recent_comment_body"><p>学习学习</p>
+</li>
+                <li class="recent_comment_author">--Coderon</li>
+                <li class="recent_comment_title"><a href="https://www.cnblogs.com/qcrao-2018/p/10903807.html">2. Re:深度解密Go语言之map</a></li>
+                <li class="recent_comment_body">b 是 bmap 的地址，这里 bmap 还是源码里定义的结构体，只包含一个 tophash 数组，经编译器扩充之后的结构体才包含 key，value，overflow 这些字段。dataOffset...</li>
+                <li class="recent_comment_author">--环家伟</li>
+                <li class="recent_comment_title"><a href="https://www.cnblogs.com/qcrao-2018/p/10822655.html">3. Re:深度解密Go语言之反射</a></li>
+                <li class="recent_comment_body"><p>Go 语言里<code>有</code>的类型都 “实现了” 空接口</p>
+<p>Go 语言里<code>所有</code>的类型都 “实现了” 空接口</p>
+</li>
+                <li class="recent_comment_author">--smart3129</li>
+                <li class="recent_comment_title"><a href="https://www.cnblogs.com/qcrao-2018/p/11220651.html">4. Re:深度解密Go语言之channel</a></li>
+                <li class="recent_comment_body">您好，N个sender，一个reciver的时候， ···· select { case &lt;- stopCh: return case dataCh &lt;- rand.Intn(Max): } ····...</li>
+                <li class="recent_comment_author">--二郎腿</li>
+                <li class="recent_comment_title"><a href="https://www.cnblogs.com/qcrao-2018/p/10520785.html">5. Re:图解Go语言内存分配</a></li>
+                <li class="recent_comment_body"><p>谢谢博主，一口气读了您很多文章，透彻且通俗易懂！</p>
+</li>
+                <li class="recent_comment_author">--Miralvos</li>
+        </ul>
+    </div>
+</div>
+
+</div>
+
+
+</div>
+                    <script>loadBlogSideColumn();</script>
+			</div>			
+		</div><!--end: sideBarMain -->
+	</div><!--end: sideBar 侧边栏容器 -->
+	<div class="clear"></div>
+	</div><!--end: main -->
+	<div class="clear"></div>
+	<div id="footer">
+		<!--done-->
+Copyright © 2024 Stefno
+<br><span id="poweredby">Powered by .NET 8.0 on Kubernetes</span>
+
+
+
+	</div><!--end: footer -->
+</div><!--end: home 自定义的最大容器 -->
+
+
+
+    
+
+    <input type="hidden" id="antiforgery_token" value="CfDJ8AOXHS93SCdEnLt5HW8VuxTCtJa6id3SkD_gMjab86JM0kt-5RyZuwWnwwQhMiWd2JwY766Xk3Ufljed2AeKZ-C5yWlMpsxZxpzIhfn-tj4bSsLnJg1hQ1AUN8PQyrAYwTu90_QgmbOt-IU_w_pq_dw">
+    <script async="" src="./深度解密Go语言之context - Stefno - 博客园_files/js"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-M95P3TTWJZ');
+</script>
+<script defer="" src="./深度解密Go语言之context - Stefno - 博客园_files/hm.js.下载"></script>
+
+
+<div style="z-index: 998; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; flex-direction: column; align-items: center; justify-content: center">
+<div style="background: #fff;padding: 30px; margin: 30px; border-radius: 16px;">
+  <div style="width: 200px; height: 200px; background: rgba(255, 255, 255, 0.8); position: absolute; top: -100px; right: -100px; border-radius: 100px"></div>
+  <div style="text-align: center; font-size: 18px; margin-bottom: 10px;">点击右上角即可分享</div>
+  <img src="./深度解密Go语言之context - Stefno - 博客园_files/35695-20230906145857937-1471873834.gif" alt="微信分享提示">
+</div>   
+    </div><button class="charm-bar-item charm-bar-handle hidden" type="button" title="显示工具栏"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="logo">
+  <style>
+    .main {
+      fill: #FFF;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .main {
+        fill: #59E8EB;
+      }
+    }
+  </style>
+  <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+    <g transform="translate(-240.000000, -192.000000)">
+      <g id="VIP_3_line" transform="translate(240.000000, 192.000000)">
+        <path d="M24,0 L24,24 L0,24 L0,0 L24,0 Z M12.5934901,23.257841 L12.5819402,23.2595131 L12.5108777,23.2950439 L12.4918791,23.2987469 L12.4918791,23.2987469 L12.4767152,23.2950439 L12.4056548,23.2595131 C12.3958229,23.2563662 12.3870493,23.2590235 12.3821421,23.2649074 L12.3780323,23.275831 L12.360941,23.7031097 L12.3658947,23.7234994 L12.3769048,23.7357139 L12.4804777,23.8096931 L12.4953491,23.8136134 L12.4953491,23.8136134 L12.5071152,23.8096931 L12.6106902,23.7357139 L12.6232938,23.7196733 L12.6232938,23.7196733 L12.6266527,23.7031097 L12.609561,23.275831 C12.6075724,23.2657013 12.6010112,23.2592993 12.5934901,23.257841 L12.5934901,23.257841 Z M12.8583906,23.1452862 L12.8445485,23.1473072 L12.6598443,23.2396597 L12.6498822,23.2499052 L12.6498822,23.2499052 L12.6471943,23.2611114 L12.6650943,23.6906389 L12.6699349,23.7034178 L12.6699349,23.7034178 L12.678386,23.7104931 L12.8793402,23.8032389 C12.8914285,23.8068999 12.9022333,23.8029875 12.9078286,23.7952264 L12.9118235,23.7811639 L12.8776777,23.1665331 C12.8752882,23.1545897 12.8674102,23.1470016 12.8583906,23.1452862 L12.8583906,23.1452862 Z M12.1430473,23.1473072 C12.1332178,23.1423925 12.1221763,23.1452606 12.1156365,23.1525954 L12.1099173,23.1665331 L12.0757714,23.7811639 C12.0751323,23.7926639 12.0828099,23.8018602 12.0926481,23.8045676 L12.108256,23.8032389 L12.3092106,23.7104931 L12.3186497,23.7024347 L12.3186497,23.7024347 L12.3225043,23.6906389 L12.340401,23.2611114 L12.337245,23.2485176 L12.337245,23.2485176 L12.3277531,23.2396597 L12.1430473,23.1473072 Z" id="MingCute" fill-rule="nonzero"></path>
+        <path class="main" d="M2.33789,4.86283 C1.86918,4.02957 2.47132,3 3.42736,3 L9.70837,3 C10.2488,3 10.7475,3.29076 11.0138,3.7611 L12.9999,7.26995 L14.986,3.7611 C15.2523,3.29076 15.7509,3 16.2914,3 L20.5724,3 C21.5285,3 22.1306,4.02957 21.6619,4.86282 L13.0894,20.1029 C12.6115,20.9525 11.3883,20.9525 10.9104,20.1029 L2.33789,4.86283 Z M4.70974,5 L11.9999,17.9603 L19.29,5 L16.5829,5 L12.9999,11.3301 L9.41685,5 L4.70974,5 Z"></path>
+      </g>
+    </g>
+  </g>
+</svg> </button><div class="charm-bar-wrapper hidden"><div class="charm-bar-main"><div class="charm-bar-panel inactive hidden"></div><div class="charm-bar"><a class="charm-bar-item tongyi" target="_blank" title="博客园会员" href="https://www.cnblogs.com/cmt/p/18302049">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="logo">
+        <style>
+          .main {
+            fill: #FFF;
+          }
+
+          @media (prefers-color-scheme: dark) {
+            .main {
+              fill: #59E8EB;
+            }
+          }
+        </style>
+        <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+          <g transform="translate(-240.000000, -192.000000)">
+            <g id="VIP_3_line" transform="translate(240.000000, 192.000000)">
+              <path d="M24,0 L24,24 L0,24 L0,0 L24,0 Z M12.5934901,23.257841 L12.5819402,23.2595131 L12.5108777,23.2950439 L12.4918791,23.2987469 L12.4918791,23.2987469 L12.4767152,23.2950439 L12.4056548,23.2595131 C12.3958229,23.2563662 12.3870493,23.2590235 12.3821421,23.2649074 L12.3780323,23.275831 L12.360941,23.7031097 L12.3658947,23.7234994 L12.3769048,23.7357139 L12.4804777,23.8096931 L12.4953491,23.8136134 L12.4953491,23.8136134 L12.5071152,23.8096931 L12.6106902,23.7357139 L12.6232938,23.7196733 L12.6232938,23.7196733 L12.6266527,23.7031097 L12.609561,23.275831 C12.6075724,23.2657013 12.6010112,23.2592993 12.5934901,23.257841 L12.5934901,23.257841 Z M12.8583906,23.1452862 L12.8445485,23.1473072 L12.6598443,23.2396597 L12.6498822,23.2499052 L12.6498822,23.2499052 L12.6471943,23.2611114 L12.6650943,23.6906389 L12.6699349,23.7034178 L12.6699349,23.7034178 L12.678386,23.7104931 L12.8793402,23.8032389 C12.8914285,23.8068999 12.9022333,23.8029875 12.9078286,23.7952264 L12.9118235,23.7811639 L12.8776777,23.1665331 C12.8752882,23.1545897 12.8674102,23.1470016 12.8583906,23.1452862 L12.8583906,23.1452862 Z M12.1430473,23.1473072 C12.1332178,23.1423925 12.1221763,23.1452606 12.1156365,23.1525954 L12.1099173,23.1665331 L12.0757714,23.7811639 C12.0751323,23.7926639 12.0828099,23.8018602 12.0926481,23.8045676 L12.108256,23.8032389 L12.3092106,23.7104931 L12.3186497,23.7024347 L12.3186497,23.7024347 L12.3225043,23.6906389 L12.340401,23.2611114 L12.337245,23.2485176 L12.337245,23.2485176 L12.3277531,23.2396597 L12.1430473,23.1473072 Z" id="MingCute" fill-rule="nonzero"></path>
+              <path class="main" d="M2.33789,4.86283 C1.86918,4.02957 2.47132,3 3.42736,3 L9.70837,3 C10.2488,3 10.7475,3.29076 11.0138,3.7611 L12.9999,7.26995 L14.986,3.7611 C15.2523,3.29076 15.7509,3 16.2914,3 L20.5724,3 C21.5285,3 22.1306,4.02957 21.6619,4.86282 L13.0894,20.1029 C12.6115,20.9525 11.3883,20.9525 10.9104,20.1029 L2.33789,4.86283 Z M4.70974,5 L11.9999,17.9603 L19.29,5 L16.5829,5 L12.9999,11.3301 L9.41685,5 L4.70974,5 Z"></path>
+            </g>
+          </g>
+        </g>
+      </svg>
+      <svg viewBox="0 0 499 120" width="110" height="40" fill="#fff" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2"><path d="M.502 81.25c3.712-2.432 9.088-6.144 16.384-11.392 7.296-5.248 12.16-8.832 14.72-10.88l1.024 7.808 1.024 6.528c-1.536 1.152-6.144 4.736-13.696 10.624-6.272 4.864-11.136 8.704-14.848 11.52L.502 81.25zm1.664-60.544H60.79v14.592H2.166V20.706zm69.376 13.312l4.224-15.616h39.296v15.616h-43.52zM38.39 57.442c2.176-2.688 4.224-5.76 6.4-8.96 2.176-3.328 4.224-6.528 6.016-9.6l9.856 7.04a254.37 254.37 0 01-6.4 10.112c-2.176 3.456-4.352 6.528-6.272 9.216l-9.6-7.808zM10.742 38.754c2.688 3.712 4.992 6.656 6.656 9.088l3.456 4.992a70.834 70.834 0 013.072 4.48l-9.984 7.808C9.59 57.954 5.366 51.554 1.398 45.794l9.344-7.04zm32 26.752c3.2 2.56 6.784 5.504 10.752 8.96 3.968 3.328 7.68 6.4 11.008 9.088l-8.448 11.008c-2.944-2.816-6.528-6.016-10.624-9.472-3.968-3.584-7.552-6.784-10.752-9.472l8.064-10.112zm7.04-65.28c1.408 1.28 4.48 4.48 9.344 9.472.64.64 1.152 1.152 1.536 1.664a7.335 7.335 0 011.408 1.408l-8.064 8.192a839.703 839.703 0 00-3.328-3.712c-1.536-1.664-3.072-3.2-4.608-4.736-1.408-1.536-2.816-2.944-4.096-4.352L49.782.226zm-32.64 102.272c2.176 0 3.712-.128 4.736-.512 1.024-.384 1.664-.896 2.048-1.792.384-.896.64-2.176.64-3.968V2.274H39.03v101.12c0 5.12-1.28 8.704-3.84 10.752-2.432 2.176-6.784 3.2-13.056 3.2H9.462l-2.688-14.848h10.368zm37.76-52.992c4.736-7.04 8.704-14.848 11.904-23.424 3.2-8.576 5.632-17.28 7.04-25.856l13.952 3.072C85.622 13.922 82.55 23.906 78.71 33.25c-3.712 9.216-9.088 19.584-16.128 31.232l-7.68-14.976zm-3.84 57.344c11.008-7.552 19.456-14.976 25.344-22.4 5.888-7.424 10.112-15.488 12.672-24.192 2.688-8.704 4.608-19.712 5.76-33.024h13.312c-1.28 15.744-3.584 29.056-7.04 39.936-3.456 10.88-8.32 20.48-14.592 28.672s-14.72 16-25.088 23.424L51.062 106.85zm25.472-75.136c.64 11.008 2.432 20.736 5.12 29.184a72.453 72.453 0 0012.672 23.04c5.632 6.784 12.928 13.184 22.016 18.944l-8.832 15.616c-9.216-7.296-16.768-14.848-22.528-22.528-5.76-7.808-10.112-16-13.312-24.704-3.072-8.704-5.12-18.432-6.272-29.312l11.136-10.24zM128.374 94.434l57.728-5.888-.128 14.72-56.192 6.528-1.408-15.36zm14.848-59.776h31.232v13.824h-31.232V34.658zm.128 27.904h31.232V76.13H143.35V62.562zm95.744-39.68c-.384 13.568-.896 27.776-1.408 42.496-.512 14.72-.896 25.856-1.28 33.152-.128 4.48-.896 7.808-2.304 10.24-1.28 2.432-3.328 4.096-6.144 4.992-2.688 1.024-6.528 1.536-11.52 1.536H204.79l-2.816-14.464h8.704c3.328 0 5.76-.256 7.296-.64 1.536-.512 2.56-1.408 3.2-2.56.64-1.152.896-3.072 1.024-5.632.256-5.632.64-16.64 1.28-32.896.384-12.416.64-19.584.64-21.632h-38.656V22.882h53.632zm-61.44 83.968c4.736-5.888 8.32-11.264 10.752-16 2.432-4.736 4.096-10.88 5.248-18.176 1.152-7.296 1.92-17.536 2.304-30.592.128-3.2.256-11.008.384-23.424 0-5.248 0-11.392.128-18.304h14.592c-.128 4.864-.256 11.52-.384 19.84s-.256 16-.512 23.168c-.512 14.336-1.408 25.728-2.816 34.048-1.28 8.32-3.456 15.616-6.4 21.888-2.944 6.144-7.424 12.928-13.312 20.224l-9.984-12.672zM135.414 5.218h45.824v86.144h-14.08V19.81h-17.664v76.544h-14.08V5.218zM269.174 99.298h88.064v13.312h-88.064V99.298zm16.768-73.088h56.96v12.928h-56.96V26.21zm-5.376 21.76h66.944v12.672h-66.944V47.97zm35.2 6.528h12.928v23.68c0 1.408.256 2.304.64 2.816.384.384 1.28.64 2.432.64h1.792c1.152 0 2.048-.128 2.688-.256.64-.256 1.024-.64 1.152-1.28.256-.64.384-1.792.512-3.2.128-.768.128-1.664.128-2.56v-6.4l10.368 1.792c0 1.664 0 3.712-.128 6.016-.128 2.176-.128 4.224-.256 5.888-.256 3.072-.768 5.504-1.536 7.296-.64 1.664-1.792 2.944-3.456 3.84-1.664.768-3.84 1.152-6.656 1.152h-9.088c-4.096 0-7.04-1.024-8.832-2.944-1.792-1.92-2.688-5.376-2.688-10.112V54.498zm-36.864 32c3.456-2.176 6.144-4.224 8.064-6.144 1.92-2.048 3.456-4.224 4.48-6.528 1.024-2.432 1.664-5.376 2.048-8.832.128-1.536.128-4.48.256-8.704h13.568c-.128 4.48-.256 7.68-.384 9.6-.384 4.992-1.28 9.344-2.56 12.8a28.99 28.99 0 01-5.76 9.472c-2.56 2.816-6.016 5.76-10.368 8.96l-9.344-10.624zM261.11 3.81h105.728v114.688h-14.72V18.146H276.47v100.352h-15.36V3.81zM491.254 7.01v15.232L451.19 49.25v50.304c0 4.48-.64 8.064-1.792 10.496-1.152 2.432-3.2 4.224-6.016 5.248-2.816 1.152-6.784 1.664-11.904 1.664h-17.664l-3.2-16.128h15.36c2.688 0 4.48-.128 5.632-.512 1.152-.384 1.92-1.152 2.304-2.048.384-1.024.64-2.688.64-4.992V41.698l31.104-19.584h-70.4V7.01h96zm6.784 45.952v15.104H385.91V52.962h112.128z" fill-rule="nonzero"></path></svg>
+      </a><button class="charm-bar-item" type="button" title="隐藏工具栏"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"></path>
+</svg>
+</button></div></div></div></body></html>

@@ -1,0 +1,39 @@
+/**
+ * @File : client.go
+ * @Description : RPC Client Example for HelloService using JSON-RPC
+ * @Author : 请填写作者的真实姓名
+ * @Date : 2024-10-06
+ */
+
+package main
+
+import (
+	"fmt"             // 引入格式化输入输出包，用于输出结果
+	"net"             // 引入网络包，用于建立 TCP 连接
+	"net/rpc"         // 引入 Go 的内置 RPC 包，提供 RPC 机制
+	"net/rpc/jsonrpc" // 引入 JSON-RPC 包，支持 JSON 格式的 RPC 调用
+)
+
+func main() {
+	// 建立与 RPC 服务器的 TCP 连接，连接到本地的 1234 端口
+	conn, err := net.Dial("tcp", "127.0.0.1:1234")
+	if err != nil {
+		// 如果连接失败，则输出错误信息并终止程序
+		panic(err)
+	}
+
+	var reply string // 定义一个字符串变量 reply，用于存储 RPC 调用的返回结果
+
+	// 创建一个新的 RPC 客户端，使用 JSON-RPC 编码器
+	client := rpc.NewClientWithCodec(jsonrpc.NewClientCodec(conn))
+
+	// 调用远程的 HelloService.Hello 方法，传递参数 "hello"，并将返回结果存储到 reply 中
+	err = client.Call("HelloService.Hello", "hello", &reply)
+	if err != nil {
+		// 如果 RPC 调用失败，则输出错误信息并终止程序
+		panic(err)
+	}
+
+	// 打印从服务器接收到的结果
+	fmt.Println(reply)
+}
